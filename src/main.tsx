@@ -18,6 +18,68 @@ type Auth0ProviderWithNavigateProps = {
   children: ReactNode
 }
 
+const PLACEHOLDER_TOKENS = [
+  'your_auth0_domain',
+  'your_auth0_audience',
+  'your_auth0_client_id',
+  'tu_client_id_spa',
+  'dev-xxxxx.us.auth0.com',
+]
+
+const isPlaceholder = (value: string) => {
+  const normalized = value.trim().toLowerCase()
+  if (!normalized) return true
+  return PLACEHOLDER_TOKENS.some((token) => normalized.includes(token))
+}
+
+const normalizeDomain = (raw: string) => {
+  const value = raw.trim()
+  if (!value) return ''
+  try {
+    const url = value.includes('://') ? new URL(value) : new URL(`https://${value}`)
+    return url.hostname
+  } catch (err) {
+    return value.replace(/^https?:\/\//, '').replace(/\/+$/, '')
+  }
+}
+
+const normalizeValue = (raw: string) => raw.trim()
+
+type ResolveConfigOpts = {
+  primaryRaw?: string | null
+  primaryLabel: string
+  fallbackRaw?: string | null
+  fallbackLabel: string
+  normalize: (value: string) => string
+}
+
+const resolveConfigValue = ({ primaryRaw, primaryLabel, fallbackRaw, fallbackLabel, normalize }: ResolveConfigOpts) => {
+  const candidates = [
+    { raw: primaryRaw, label: primaryLabel },
+    { raw: fallbackRaw, label: fallbackLabel },
+  ]
+
+  for (const candidate of candidates) {
+    const trimmed = (candidate.raw ?? '').trim()
+    if (!trimmed) {
+      continue
+    }
+    if (isPlaceholder(trimmed)) {
+      throw new Error(`[config] ${candidate.label} still uses placeholder value`)
+    }
+    const normalized = normalize(trimmed)
+    if (!normalized.trim()) {
+      continue
+    }
+    if (isPlaceholder(normalized)) {
+      throw new Error(`[config] ${candidate.label} resolved to placeholder value after normalization`)
+    }
+    return normalized
+  }
+
+  throw new Error(`[config] Missing ${primaryLabel} or ${fallbackLabel}`)
+}
+
 function Auth0ProviderWithNavigate({ config, children }: Auth0ProviderWithNavigateProps) {
   const navigate = useNavigate()
 
@@ -40,40 +102,43 @@ function Auth0ProviderWithNavigate({ config, children }: Auth0ProviderWithNaviga
 }
 
 async function bootstrap() {
-  const res = await fetch('/public/config')
-  const cfg = await res.json()
+  let backendConfig: Partial<Record<'auth0Domain' | 'auth0Audience' | 'auth0ClientId', string>> = {}
 
-  const normalizeDomain = (raw: string | undefined | null) => {
-    const value = (raw ?? '').trim()
-    if (!value) return ''
-    try {
-      const url = value.includes('://') ? new URL(value) : new URL(`https://${value}`)
-      return url.hostname
-    } catch (err) {
-      return value.replace(/^https?:\/\//, '').replace(/\/+$/, '')
+  try {
+    const res = await fetch('/public/config')
+    if (res.ok) {
+      backendConfig = await res.json()
     }
+  } catch (err) {
+    console.warn('[config] Could not load /public/config, falling back to environment variables.', err)
   }
 
-  const normalizeValue = (raw: string | undefined | null) => (raw ?? '').trim()
+  const auth0Domain = resolveConfigValue({
+    primaryRaw: backendConfig.auth0Domain,
+    primaryLabel: '/public/config.auth0Domain',
+    fallbackRaw: import.meta.env.VITE_AUTH0_DOMAIN,
+    fallbackLabel: 'VITE_AUTH0_DOMAIN',
+    normalize: normalizeDomain,
+  })
+  const auth0Audience = resolveConfigValue({
+    primaryRaw: backendConfig.auth0Audience,
+    primaryLabel: '/public/config.auth0Audience',
+    fallbackRaw: import.meta.env.VITE_AUTH0_AUDIENCE,
+    fallbackLabel: 'VITE_AUTH0_AUDIENCE',
+    normalize: normalizeValue,
+  })
+  const auth0ClientId = resolveConfigValue({
+    primaryRaw: backendConfig.auth0ClientId,
+    primaryLabel: '/public/config.auth0ClientId',
+    fallbackRaw: import.meta.env.VITE_AUTH0_CLIENT_ID,
+    fallbackLabel: 'VITE_AUTH0_CLIENT_ID',
+    normalize: normalizeValue,
+  })
 
-  const envDefaults = {
-    domain: normalizeDomain(import.meta.env.VITE_AUTH0_DOMAIN),
-    audience: normalizeValue(import.meta.env.VITE_AUTH0_AUDIENCE),
-    clientId: normalizeValue(import.meta.env.VITE_AUTH0_CLIENT_ID),
-  }
-
-  let auth0Domain = normalizeDomain(cfg.auth0Domain)
-  let auth0Audience = normalizeValue(cfg.auth0Audience)
-  let auth0ClientId = normalizeValue(cfg.auth0ClientId)
-
-  if (!auth0Domain || !auth0Audience || !auth0ClientId) {
-    auth0Domain = auth0Domain || envDefaults.domain
-    auth0Audience = auth0Audience || envDefaults.audience
-    auth0ClientId = auth0ClientId || envDefaults.clientId
-  }
-
-  if (!auth0Domain || !auth0Audience || !auth0ClientId) {
-    throw new Error('Auth0 configuration is incomplete. Check /public/config and .env values.')
+  window.__APP_CONFIG__ = {
+    auth0Domain,
+    auth0Audience,
+    auth0ClientId,
   }
 
   createRoot(document.getElementById('root')!).render(
