@@ -65,7 +65,7 @@ const LoginPage: React.FC = () => {
                   fontWeight: '600'
                 }}
               >
-                {submitting ? 'Redirigiendo…' : 'Ingresar con Auth0'}
+                {submitting ? 'Redirigiendo…' : 'Ingresar'}
               </Button>
             </Form.Item>
           </Form>

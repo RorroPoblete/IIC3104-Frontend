@@ -9,7 +9,7 @@ npm install
 cp .env.example .env
 ```
 
-Completa las variables `VITE_AUTH0_*` con las credenciales reales (los placeholders `YOUR_*` provocan error en runtime).
+Completa las variables `VITE_AUTH0_*` con las credenciales reales (los placeholders `YOUR_*` provocan error en runtime) y ajusta `VITE_BACKEND_BASE_URL` si tu backend corre en otra dirección.
 
 ## Ejecutar
 
@@ -21,12 +21,7 @@ La aplicación se abre en `http://localhost:8000/login`
 
 ## Autenticación
 
-- El frontend intenta cargar la configuración de Auth0 desde el backend en runtime:
-
-```
-GET http://localhost:3001/public/config
-```
-
+- El frontend solicita la configuración de Auth0 en runtime desde `/public/config`; puedes apuntar a otro host ajustando `VITE_BACKEND_BASE_URL` (por defecto `http://localhost:3000`).
 - Si el backend no está disponible, se usan las variables `VITE_AUTH0_*`. Ambas fuentes se validan y la app falla si detecta placeholders o valores vacíos.
 - Botón "Ingresar con Auth0" redirige al proveedor y vuelve a `/admin`.
 
