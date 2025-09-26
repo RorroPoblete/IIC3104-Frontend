@@ -1,20 +1,31 @@
-import React, { useState } from 'react'
-import { Form, Input, Button, Card, Typography } from 'antd'
-import { UserOutlined, LockOutlined, MedicineBoxOutlined } from '@ant-design/icons'
+import React, { useEffect, useMemo, useState } from 'react'
+import { Form, Button, Card, Typography } from 'antd'
+import { MedicineBoxOutlined } from '@ant-design/icons'
 import { useAuth } from '../components/AuthContext'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 const LoginPage: React.FC = () => {
-  const { loginWithRedirect } = useAuth()
+  const { loginWithRedirect, isAuthenticated, loading } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [submitting, setSubmitting] = useState(false)
   const [form] = Form.useForm()
+
+  const returnTo = useMemo(() => {
+    const state = location.state as { from?: { pathname?: string } } | undefined
+    return state?.from?.pathname || '/admin'
+  }, [location.state])
+
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      navigate(returnTo, { replace: true })
+    }
+  }, [isAuthenticated, loading, navigate, returnTo])
 
   const handleLogin = async () => {
     setSubmitting(true)
     try {
-      await loginWithRedirect()
-      navigate('/admin')
+      await loginWithRedirect({ appState: { returnTo } })
     } finally {
       setSubmitting(false)
     }

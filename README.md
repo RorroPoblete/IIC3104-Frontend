@@ -14,12 +14,17 @@ npm install
 npm run dev
 ```
 
-La aplicación se abre en `http://localhost:8001/login`
+La aplicación se abre en `http://localhost:8000/login`
 
-## Credenciales
+## Autenticación
 
-- Email: `admin@demo.cl`
-- Password: `Admin!123`
+- El frontend carga la configuración de Auth0 desde el backend en runtime:
+
+```
+GET http://localhost:3001/public/config
+```
+
+- Botón "Ingresar con Auth0" redirige al proveedor y vuelve a `/admin`.
 
 ## Build
 
@@ -31,5 +36,6 @@ npm run build
 
 - `src/pages/Login.tsx` - Página de login
 - `src/pages/Admin.tsx` - Panel de administración
-- `src/components/AuthContext.tsx` - Manejo de autenticación
+- `src/components/AuthContext.tsx` - Wrapper sobre `auth0-react`
+- `src/utils/authFetch.ts` - Helper para llamadas con token Bearer
 - `src/components/UCHeader.tsx` - Header del sistema
