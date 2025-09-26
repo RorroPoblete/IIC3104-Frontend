@@ -1,27 +1,31 @@
-import React, { useState } from 'react'
-import { Form, Input, Button, Card, Typography, message, Space } from 'antd'
-import { UserOutlined, LockOutlined, MedicineBoxOutlined } from '@ant-design/icons'
+import React, { useEffect, useMemo, useState } from 'react'
+import { Form, Button, Card, Typography } from 'antd'
+import { MedicineBoxOutlined } from '@ant-design/icons'
 import { useAuth } from '../components/AuthContext'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 const LoginPage: React.FC = () => {
-  const { login } = useAuth()
+  const { loginWithRedirect, isAuthenticated, loading } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [submitting, setSubmitting] = useState(false)
   const [form] = Form.useForm()
 
-  const handleSubmit = async (values: { email: string; password: string }) => {
+  const returnTo = useMemo(() => {
+    const state = location.state as { from?: { pathname?: string } } | undefined
+    return state?.from?.pathname || '/admin'
+  }, [location.state])
+
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      navigate(returnTo, { replace: true })
+    }
+  }, [isAuthenticated, loading, navigate, returnTo])
+
+  const handleLogin = async () => {
     setSubmitting(true)
     try {
-      const res = await login(values.email, values.password)
-      if (res.ok) {
-        message.success('Ingreso exitoso')
-        navigate('/admin')
-      } else {
-        message.error(res.message || 'Credenciales inválidas')
-      }
-    } catch (error) {
-      message.error('Error al iniciar sesión')
+      await loginWithRedirect({ appState: { returnTo } })
     } finally {
       setSubmitting(false)
     }
@@ -46,44 +50,11 @@ const LoginPage: React.FC = () => {
             </Typography.Text>
           </div>
 
-          <Form
-            form={form}
-            name="login"
-            onFinish={handleSubmit}
-            layout="vertical"
-            size="large"
-          >
-            <Form.Item
-              name="email"
-              label="Correo electrónico"
-              rules={[
-                { required: true, message: 'Por favor ingrese su correo electrónico' },
-                { type: 'email', message: 'Ingrese un correo electrónico válido' }
-              ]}
-            >
-              <Input
-                prefix={<UserOutlined style={{ color: 'var(--uc-gray-400)' }} />}
-                placeholder="admin@demo.cl"
-                style={{ borderRadius: '8px' }}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="password"
-              label="Contraseña"
-              rules={[{ required: true, message: 'Por favor ingrese su contraseña' }]}
-            >
-              <Input.Password
-                prefix={<LockOutlined style={{ color: 'var(--uc-gray-400)' }} />}
-                placeholder="Ingrese su contraseña"
-                style={{ borderRadius: '8px' }}
-              />
-            </Form.Item>
-
+          <Form form={form} name="login" layout="vertical" size="large">
             <Form.Item style={{ marginBottom: '1rem' }}>
               <Button
                 type="primary"
-                htmlType="submit"
+                onClick={handleLogin}
                 loading={submitting}
                 className="btn-primary"
                 style={{
@@ -94,17 +65,12 @@ const LoginPage: React.FC = () => {
                   fontWeight: '600'
                 }}
               >
-                {submitting ? 'Iniciando sesión...' : 'Ingresar al Sistema'}
+                {submitting ? 'Redirigiendo…' : 'Ingresar con Auth0'}
               </Button>
             </Form.Item>
           </Form>
 
-          <div className="text-center">
-            <Typography.Text type="secondary" style={{ fontSize: '0.875rem' }}>
-              <strong>Usuario de prueba:</strong><br />
-              admin@demo.cl / Admin!123
-            </Typography.Text>
-          </div>
+          <div className="text-center" />
         </Card>
 
         <div className="text-center mt-4">
