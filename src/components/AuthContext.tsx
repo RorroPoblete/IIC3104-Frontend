@@ -1,61 +1,33 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
+import { useAuth0, User as Auth0User } from '@auth0/auth0-react';
 
-type User = { id: string; email: string; role: 'Admin' };
+type AuthUser = Pick<Auth0User, 'email' | 'name' | 'sub'> & Record<string, any>;
 type AuthContextType = {
-  user: User | null;
-  token: string | null;
+  user: AuthUser | null;
+  isAuthenticated: boolean;
   loading: boolean;
-  login: (email: string, password: string) => Promise<{ ok: boolean; message?: string }>;
+  loginWithRedirect: () => Promise<void>;
   logout: () => void;
+  getAccessTokenSilently: (opts?: any) => Promise<string>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, isAuthenticated, isLoading, loginWithRedirect, logout, getAccessTokenSilently } = useAuth0();
 
-  useEffect(() => {
-    const t = localStorage.getItem('accessToken');
-    const u = localStorage.getItem('user');
-    if (t && u) {
-      setToken(t);
-      setUser(JSON.parse(u));
-    }
-    setLoading(false);
-  }, []);
+  const value = useMemo(
+    () => ({
+      user: (user as AuthUser) || null,
+      isAuthenticated: !!isAuthenticated,
+      loading: !!isLoading,
+      loginWithRedirect,
+      logout: () => logout({ logoutParams: { returnTo: window.location.origin } }),
+      getAccessTokenSilently,
+    }),
+    [user, isAuthenticated, isLoading, loginWithRedirect, logout, getAccessTokenSilently]
+  );
 
-  const login = async (email: string, password: string) => {
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      if (res.status === 200) {
-        const data = await res.json();
-        localStorage.setItem('accessToken', data.accessToken);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        setToken(data.accessToken);
-        setUser(data.user);
-        return { ok: true };
-      }
-      const body = await res.json().catch(() => ({}));
-      return { ok: false, message: body.message || 'Error de autenticación' };
-    } catch {
-      return { ok: false, message: 'Error de red' };
-    }
-  };
-
-  const logout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('user');
-    setToken(null);
-    setUser(null);
-  };
-
-  const value = useMemo(() => ({ user, token, loading, login, logout }), [user, token, loading]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 

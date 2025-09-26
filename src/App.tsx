@@ -6,10 +6,11 @@ import LoginPage from './pages/Login'
 import AdminPage from './pages/Admin'
 
 const RequireAdmin: React.FC<{ children: React.ReactElement }> = ({ children }) => {
-  const { token, user, loading } = useAuth()
+  const { isAuthenticated, user, loading } = useAuth()
   const location = useLocation()
   if (loading) return null
-  if (!token || !user || user.role !== 'Admin') {
+  // Si tienes un claim de rol en el token, cámbialo aquí. Por ahora solo exigimos sesión.
+  if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
   return children
