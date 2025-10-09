@@ -44,6 +44,16 @@ import UCHeader from '../components/UCHeader'
 import UCBreadcrumb from '../components/UCBreadcrumb'
 import type { UploadProps, TableColumnsType } from 'antd'
 
+const API_BASE_URL = (import.meta.env.VITE_BACKEND_BASE_URL ?? 'http://localhost:3000').replace(/\/+$/, '')
+const CODIFICATION_API_BASE = `${API_BASE_URL}/api/codification`
+
+const buildCodificationUrl = (path: string) => {
+  if (!path.startsWith('/')) {
+    return `${CODIFICATION_API_BASE}/${path}`
+  }
+  return `${CODIFICATION_API_BASE}${path}`
+}
+
 const { Title, Text } = Typography
 
 interface ImportBatch {
@@ -396,7 +406,7 @@ const CodificationPage: React.FC = () => {
   const fetchBatches = async () => {
     setLoading(true)
     try {
-      const response = await fetch('http://localhost:3004/import/batches')
+      const response = await fetch(buildCodificationUrl('/batches'))
       const result = await response.json()
       if (result.success) {
         setBatches(result.data.batches)
@@ -412,7 +422,7 @@ const CodificationPage: React.FC = () => {
 
   const fetchNormalizedData = async (batchId: string) => {
     try {
-      const response = await fetch(`http://localhost:3004/import/batches/${batchId}/normalized`)
+      const response = await fetch(buildCodificationUrl(`/batches/${batchId}/normalized`))
       const result = await response.json()
       if (result.success && result.data && result.data.normalizedData) {
         const rawData = Array.isArray(result.data.normalizedData) ? result.data.normalizedData : []
@@ -462,7 +472,7 @@ const CodificationPage: React.FC = () => {
       const formData = new FormData()
       formData.append('file', selectedFile)
 
-      const response = await fetch('http://localhost:3004/import/csv', {
+      const response = await fetch(buildCodificationUrl('/csv'), {
         method: 'POST',
         body: formData,
       })
