@@ -666,11 +666,10 @@ const CodificationPage: React.FC = () => {
 
     const handleChange = React.useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newValue = e.target.value
-        setLocalValue(newValue) // Actualiza instantáneamente el input
+        setLocalValue(e.target.value); // solo estado local
       },
-      [record.id, dataIndex, handleCellChange]
-    )
+      [setLocalValue] // 👈 sin handleCellChange, sin record.id, sin dataIndex
+   );
     const commitCellChange = React.useCallback(
       (key: string, field: string, value: unknown) => {
         setEditingValues(prev => {
@@ -689,6 +688,8 @@ const CodificationPage: React.FC = () => {
           <Input
             value={localValue}
             onChange={handleChange}
+            onBlur={() => commitCellChange(record.id, dataIndex, localValue)}
+            onPressEnter={() => commitCellChange(record.id, dataIndex, localValue)}
             style={{ width: '100%' }}
             type={inputType === 'number' ? 'number' : 'text'}
           />
