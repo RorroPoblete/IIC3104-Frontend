@@ -102,34 +102,38 @@ function Auth0ProviderWithNavigate({ config, children }: Auth0ProviderWithNaviga
 }
 
 async function bootstrap() {
+  const rawBackendBaseUrl = (import.meta.env.VITE_BACKEND_BASE_URL ?? '').trim()
+  const backendBaseUrl = rawBackendBaseUrl.replace(/\/+$/, '')
+  const configUrl = backendBaseUrl ? `${backendBaseUrl}/public/config` : '/public/config'
+
   let backendConfig: Partial<Record<'auth0Domain' | 'auth0Audience' | 'auth0ClientId', string>> = {}
 
   try {
-    const res = await fetch('/public/config')
+    const res = await fetch(configUrl)
     if (res.ok) {
       backendConfig = await res.json()
     }
   } catch (err) {
-    console.warn('[config] Could not load /public/config, falling back to environment variables.', err)
+    console.warn(`[config] Could not load ${configUrl}, falling back to environment variables.`, err)
   }
 
   const auth0Domain = resolveConfigValue({
     primaryRaw: backendConfig.auth0Domain,
-    primaryLabel: '/public/config.auth0Domain',
+    primaryLabel: `${configUrl}.auth0Domain`,
     fallbackRaw: import.meta.env.VITE_AUTH0_DOMAIN,
     fallbackLabel: 'VITE_AUTH0_DOMAIN',
     normalize: normalizeDomain,
   })
   const auth0Audience = resolveConfigValue({
     primaryRaw: backendConfig.auth0Audience,
-    primaryLabel: '/public/config.auth0Audience',
+    primaryLabel: `${configUrl}.auth0Audience`,
     fallbackRaw: import.meta.env.VITE_AUTH0_AUDIENCE,
     fallbackLabel: 'VITE_AUTH0_AUDIENCE',
     normalize: normalizeValue,
   })
   const auth0ClientId = resolveConfigValue({
     primaryRaw: backendConfig.auth0ClientId,
-    primaryLabel: '/public/config.auth0ClientId',
+    primaryLabel: `${configUrl}.auth0ClientId`,
     fallbackRaw: import.meta.env.VITE_AUTH0_CLIENT_ID,
     fallbackLabel: 'VITE_AUTH0_CLIENT_ID',
     normalize: normalizeValue,
@@ -143,7 +147,12 @@ async function bootstrap() {
 
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <BrowserRouter>
+      <BrowserRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
         <ConfigProvider>
           <AntdApp>
             <Auth0ProviderWithNavigate
