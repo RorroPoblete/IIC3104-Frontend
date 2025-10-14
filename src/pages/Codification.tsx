@@ -42,7 +42,15 @@ import { useAuth } from '../components/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import UCHeader from '../components/UCHeader'
 import UCBreadcrumb from '../components/UCBreadcrumb'
-import type { UploadProps, TableColumnsType } from 'antd'
+import type { UploadProps, TableColumnsType} from 'antd'
+import type { ColumnType } from 'antd/es/table'
+
+interface EditableColumn<T> extends ColumnType<T> {
+  /** Permite marcar la columna como editable */
+  editable?: boolean
+}
+
+type EditableTableColumns<T> = EditableColumn<T>[]  
 
 const API_BASE_URL = (import.meta.env.VITE_BACKEND_BASE_URL ?? 'http://localhost:3000').replace(/\/+$/, '')
 const CODIFICATION_API_BASE = `${API_BASE_URL}/api/codification`
@@ -424,15 +432,27 @@ const CodificationPage: React.FC = () => {
     try {
       const response = await fetch(buildCodificationUrl(`/batches/${batchId}/normalized`))
       const result = await response.json()
+
       if (result.success && result.data && result.data.normalizedData) {
-        const rawData = Array.isArray(result.data.normalizedData) ? result.data.normalizedData : []
-        const validRows = rawData.filter((item: any) => isValidNormalizedRow(item))
-        const sanitizedData = validRows.map((item: any) => sanitizeNumericFields(item))
+        // 1) parte desde unknown[]
+        const rawData: unknown[] = Array.isArray(result.data.normalizedData)
+          ? result.data.normalizedData
+          : []
+        // 2) usa el type-guard para refinar el tipo
+        const validRows: Array<Record<string, unknown> & { id: string }> =
+          rawData.filter(isValidNormalizedRow)
+        // 3) sanea y obtén NormalizedData[]
+        const sanitizedData: NormalizedData[] = validRows.map((item) =>
+          sanitizeNumericFields(item)
+        )
+
         setNormalizedData(sanitizedData)
-        setModifiedData(sanitizedData.map((item) => ({ ...item })))
+        // 4) si quieres clonar, evita any tipando el parámetro
+        setModifiedData(sanitizedData.map((item: NormalizedData) => ({ ...item })))
+        // (o simplemente: setModifiedData([...sanitizedData]))
         setHasUnsavedChanges(false)
-        setEditingKey('') // Limpiar clave de edición
-        setEditingValues({}) // Limpiar valores de edición
+        setEditingKey('')
+        setEditingValues({})
       } else {
         message.error('Error al cargar los datos normalizados')
       }
@@ -618,37 +638,56 @@ const CodificationPage: React.FC = () => {
     children,
     ...restProps
   }) => {
-    // Validaciones de seguridad
     if (!record || !record.id) {
       return <td {...restProps}>{children}</td>
     }
 
-    const currentValue = modifiedData.find(item => item && item.id === record.id)?.[dataIndex as keyof NormalizedData]
-    
-    const resolveInputValue = (value: unknown): string | number => {
-      if (value === null || value === undefined) {
-        return ''
-      }
-      if (typeof value === 'number' || typeof value === 'string') {
-        return value
-      }
-      return String(value)
-    }
+    const currentValue =
+      modifiedData.find(item => item && item.id === record.id)?.[dataIndex as keyof NormalizedData]
 
-    // Obtener el valor desde editingValues o currentValue
     const editingValue = editingValues[record.id]?.[dataIndex]
     const displayValue = editingValue !== undefined ? editingValue : currentValue
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const newValue = e.target.value
-      handleCellChange(record.id, dataIndex, newValue)
-    }
+    // 🔹 valor local independiente del re-render global
+    const [localValue, setLocalValue] = React.useState<string | number>(
+      typeof displayValue === 'number' || typeof displayValue === 'string'
+        ? displayValue
+        : ''
+    )
+
+    // 🔹 sincroniza solo cuando cambia el registro o el campo
+    React.useEffect(() => {
+      if (typeof displayValue === 'number' || typeof displayValue === 'string') {
+        setLocalValue(displayValue)
+      } else {
+        setLocalValue('')
+      }
+    }, [displayValue, record.id, dataIndex])
+
+    const handleChange = React.useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newValue = e.target.value
+        setLocalValue(newValue) // Actualiza instantáneamente el input
+      },
+      [record.id, dataIndex, handleCellChange]
+    )
+    const commitCellChange = React.useCallback(
+      (key: string, field: string, value: unknown) => {
+        setEditingValues(prev => {
+          const row = prev[key] ?? {}
+          if (row[field] === value) return prev
+          return { ...prev, [key]: { ...row, [field]: value } }
+        })
+        setHasUnsavedChanges(true)
+      },
+      []
+    )
 
     return (
       <td {...restProps}>
         {editing ? (
           <Input
-            value={resolveInputValue(displayValue)}
+            value={localValue}
             onChange={handleChange}
             style={{ width: '100%' }}
             type={inputType === 'number' ? 'number' : 'text'}
@@ -659,8 +698,7 @@ const CodificationPage: React.FC = () => {
       </td>
     )
   })
-
-  const dataColumns: TableColumnsType<NormalizedData> = [
+  const dataColumns: EditableTableColumns<NormalizedData> = [
     // Campos principales del episodio
     {
       title: 'Episodio CMBD',
@@ -1441,19 +1479,26 @@ const CodificationPage: React.FC = () => {
         {/* Modal para ver datos normalizados */}
         <Modal
           title={
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                paddingRight: '3rem', // 🔹 mueve los botones hacia la izquierda
+              }}
+            >
               <span>Datos Normalizados - {selectedBatch?.filename}</span>
-              <Space>
+              <Space style={{ gap: '0.5rem' }}>
                 <Tooltip title="Filtrar columnas">
-                  <Button 
-                    icon={<SettingOutlined />} 
+                  <Button
+                    icon={<SettingOutlined />}
                     onClick={() => setColumnFilterVisible(true)}
                     size="small"
                   />
                 </Tooltip>
-                <Tooltip title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}>
-                  <Button 
-                    icon={isFullscreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />} 
+                <Tooltip title={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}>
+                  <Button
+                    icon={isFullscreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
                     onClick={toggleFullscreen}
                     size="small"
                   />
@@ -1461,6 +1506,7 @@ const CodificationPage: React.FC = () => {
               </Space>
             </div>
           }
+
           open={dataModalVisible}
           onCancel={() => setDataModalVisible(false)}
           footer={[
