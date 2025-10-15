@@ -1,52 +1,40 @@
-# IIC3104 Frontend
+# Frontend - Sistema GRD-FONASA
 
-Proyecto base: React 18 + TypeScript + Vite, con Ant Design y Ant Design Pro Components. Vista mínima: "Hello World".
-
-## Requisitos
-
-- Node.js ≥ 20.19.0 (o 22.12+). Vite requiere esta versión o superior.
-- npm ≥ 10
-
-Sugerido gestionar versiones con `nvm`:
-
-```bash
-nvm install 20.19.0
-nvm use 20.19.0
-```
+Frontend del sistema de gestión hospitalaria UC CHRISTUS.
 
 ## Instalación
 
 ```bash
 npm install
+cp .env.example .env
 ```
 
-## Desarrollo
+Completa las variables `VITE_AUTH0_*` con las credenciales reales (los placeholders `YOUR_*` provocan error en runtime) y ajusta `VITE_BACKEND_BASE_URL` si tu backend corre en otra dirección.
+
+## Ejecutar
 
 ```bash
 npm run dev
 ```
 
-La app estará disponible en `http://localhost:5173`.
+La aplicación se abre en `http://localhost:8000/login`
 
-## Build de producción
+## Autenticación
+
+- El frontend solicita la configuración de Auth0 en runtime desde `/public/config`; puedes apuntar a otro host ajustando `VITE_BACKEND_BASE_URL` (por defecto `http://localhost:3000`).
+- Si el backend no está disponible, se usan las variables `VITE_AUTH0_*`. Ambas fuentes se validan y la app falla si detecta placeholders o valores vacíos.
+- Botón "Ingresar con Auth0" redirige al proveedor y vuelve a `/admin`.
+
+## Build
 
 ```bash
 npm run build
 ```
 
-El resultado queda en la carpeta `dist/`.
+## Archivos principales
 
-## Preview local del build
-
-```bash
-npm run preview
-```
-
-## Estructura relevante
-
-- `src/main.tsx`: configuración de React + `ConfigProvider` de Ant Design.
-- `src/App.tsx`: vista mínima con `ProCard` mostrando "Hello World".
-
-## Notas
-
-- Si ves un warning de engines de Node, actualiza Node a ≥ 20.19.
+- `src/pages/Login.tsx` - Página de login
+- `src/pages/Admin.tsx` - Panel de administración
+- `src/components/AuthContext.tsx` - Wrapper sobre `auth0-react`
+- `src/utils/authFetch.ts` - Helper para llamadas con token Bearer
+- `src/components/UCHeader.tsx` - Header del sistema
