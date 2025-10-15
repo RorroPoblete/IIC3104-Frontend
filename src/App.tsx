@@ -8,7 +8,7 @@ import AdminPage from './pages/Admin'
 import CodificationPage from './pages/Codification'
 
 const RequireAdmin: React.FC<{ children: React.ReactElement }> = ({ children }) => {
-  const { isAuthenticated, user, loading } = useAuth()
+  const { isAuthenticated, loading } = useAuth()
   const location = useLocation()
   if (loading) return null
   if (!isAuthenticated) {
