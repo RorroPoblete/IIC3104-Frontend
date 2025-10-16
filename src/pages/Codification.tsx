@@ -327,7 +327,7 @@ const CodificationPage: React.FC = () => {
     }
   }
 
-  // handleCellChange ya no se utiliza; la edición se maneja dentro de EditableCell
+  // Función removida ya que no se utiliza
 
   const handleSaveAllChanges = async () => {
     setSaving(true)
