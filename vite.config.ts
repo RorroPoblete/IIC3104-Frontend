@@ -10,8 +10,4 @@ export default defineConfig({
       '/public': { target: 'http://localhost:3000', changeOrigin: true },
     },
   },
-  test: {
-    environment: 'jsdom',
-    setupFiles: ['./vitest.setup.ts'],
-  },
 })
