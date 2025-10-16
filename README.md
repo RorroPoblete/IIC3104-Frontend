@@ -2,12 +2,12 @@
 
 Frontend del sistema de gestión hospitalaria UC CHRISTUS.
 
-## Instalación
+## Instalación c
 
 ```bash
-npm install
+npm install 
 cp .env.example .env
-```
+``` 
 
 Completa las variables `VITE_AUTH0_*` con las credenciales reales (los placeholders `YOUR_*` provocan error en runtime) y ajusta `VITE_BACKEND_BASE_URL` si tu backend corre en otra dirección.
 
