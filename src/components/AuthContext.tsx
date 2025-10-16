@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import { useAuth0, User as Auth0User } from '@auth0/auth0-react';
+import type { RedirectLoginOptions } from '@auth0/auth0-spa-js';
 
 type AuthUser = Pick<Auth0User, 'email' | 'name' | 'sub'> & Record<string, any>;
 type AuthContextType = {
   user: AuthUser | null;
   isAuthenticated: boolean;
   loading: boolean;
-  loginWithRedirect: () => Promise<void>;
+  loginWithRedirect: (options?: RedirectLoginOptions) => Promise<void>;
   logout: () => void;
   getAccessTokenSilently: (opts?: any) => Promise<string>;
 };

@@ -1,7 +1,7 @@
 import { StrictMode, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App as AntdApp, ConfigProvider } from 'antd'
-import { BrowserRouter, useNavigate } from 'react-router-dom'
+import { HashRouter, useNavigate } from 'react-router-dom'
 import { Auth0Provider } from '@auth0/auth0-react'
 import 'antd/dist/reset.css'
 import './index.css'
@@ -82,13 +82,14 @@ const resolveConfigValue = ({ primaryRaw, primaryLabel, fallbackRaw, fallbackLab
 
 function Auth0ProviderWithNavigate({ config, children }: Auth0ProviderWithNavigateProps) {
   const navigate = useNavigate()
+  const redirectUri = `${window.location.origin}/#/login/callback`
 
   return (
     <Auth0Provider
       domain={config.domain}
       clientId={config.clientId}
       authorizationParams={{
-        redirect_uri: `${window.location.origin}/login/callback`,
+        redirect_uri: redirectUri,
         audience: config.audience,
       }}
       onRedirectCallback={(appState) => {
@@ -147,12 +148,7 @@ async function bootstrap() {
 
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <BrowserRouter
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true,
-        }}
-      >
+      <HashRouter>
         <ConfigProvider>
           <AntdApp>
             <Auth0ProviderWithNavigate
@@ -162,7 +158,7 @@ async function bootstrap() {
             </Auth0ProviderWithNavigate>
           </AntdApp>
         </ConfigProvider>
-      </BrowserRouter>
+      </HashRouter>
     </StrictMode>,
   )
 }

@@ -25,7 +25,7 @@ const LoginPage: React.FC = () => {
   const handleLogin = async () => {
     setSubmitting(true)
     try {
-      await loginWithRedirect()
+      await loginWithRedirect({ appState: { returnTo } })
     } finally {
       setSubmitting(false)
     }
