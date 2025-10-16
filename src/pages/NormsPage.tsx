@@ -13,8 +13,6 @@ import {
   Progress,
   Tabs,
   Alert,
-  Row,
-  Col,
   Select,
   Tooltip
 } from 'antd'
@@ -29,9 +27,8 @@ import {
   FullscreenOutlined,
   FullscreenExitOutlined,
   ArrowLeftOutlined,
-  SettingOutlined,
   StarOutlined,
-  StarFilledOutlined
+  StarFilled
 } from '@ant-design/icons'
 import { useAuth } from '../components/AuthContext'
 import { useNavigate } from 'react-router-dom'
@@ -40,7 +37,7 @@ import UCBreadcrumb from '../components/UCBreadcrumb'
 import type { UploadProps, TableColumnsType } from 'antd'
 
 const API_BASE_URL = (import.meta.env.VITE_BACKEND_BASE_URL ?? 'http://localhost:3000').replace(/\/+$/, '')
-const NORMS_API_BASE = `${API_BASE_URL}/api/norms`
+const NORMS_API_BASE = `${API_BASE_URL}/api/normaminsal`
 
 const buildNormsUrl = (path: string) => {
   if (!path.startsWith('/')) {
@@ -55,37 +52,45 @@ const { Option } = Select
 interface NormFile {
   id: string
   filename: string
+  description?: string
   status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'PARTIALLY_COMPLETED'
   totalRows: number
   processedRows: number
   errorRows: number
+  isActive: boolean
   createdAt: string
   updatedAt: string
   completedAt?: string
-  isActive: boolean
-  normType: 'GRD' | 'FONASA' | 'CUSTOM'
-  version: string
-  description?: string
   _count: {
-    normRows: number
+    data: number
   }
 }
 
 interface NormRow {
   id: string
-  normFileId: string
-  codigo: string
-  descripcion: string
-  categoria?: string
-  subcategoria?: string
-  valor?: number
-  unidad?: string
-  fechaVigencia?: string
-  fechaVencimiento?: string
-  activo: boolean
+  fileId: string
+  grd: string
+  tipoGrd?: string
+  gravedad?: string
+  totalAltas?: number
+  totalEst?: number
+  estMedia?: number
+  altasDepu?: number
+  totalEstDepu?: number
+  estMediaDepuG?: number
+  numOutInfG?: number
+  nOutliersSup?: number
+  exitus?: number
+  percentil25?: number
+  percentil50?: number
+  percentil75?: number
+  puntoCorteInferior?: number
+  puntoCorteSuperior?: number
+  pesoTotal?: number
+  pesoTotalDepu?: number
+  rawData: Record<string, unknown>
   createdAt: string
   updatedAt: string
-  [key: string]: unknown
 }
 
 const NormsPage: React.FC = () => {
@@ -118,12 +123,12 @@ const NormsPage: React.FC = () => {
   const fetchNormFiles = async () => {
     setLoading(true)
     try {
-      const response = await fetch(buildNormsUrl('/files'))
+      const response = await fetch(buildNormsUrl('/import/batches'))
       const result = await response.json()
       if (result.success) {
-        setNormFiles(result.data.normFiles)
+        setNormFiles(result.data.batches)
         // Encontrar el archivo activo
-        const activeFile = result.data.normFiles.find((file: NormFile) => file.isActive)
+        const activeFile = result.data.batches.find((file: NormFile) => file.isActive)
         if (activeFile) {
           setActiveNormFileId(activeFile.id)
         }
@@ -139,12 +144,12 @@ const NormsPage: React.FC = () => {
 
   const fetchNormRows = async (normFileId: string) => {
     try {
-      const response = await fetch(buildNormsUrl(`/files/${normFileId}/rows`))
+      const response = await fetch(buildNormsUrl(`/import/batches/${normFileId}/data`))
       const result = await response.json()
 
-      if (result.success && result.data && result.data.normRows) {
-        const rawData: unknown[] = Array.isArray(result.data.normRows)
-          ? result.data.normRows
+      if (result.success && result.data && result.data.data) {
+        const rawData: unknown[] = Array.isArray(result.data.data)
+          ? result.data.data
           : []
         
         const validRows: NormRow[] = rawData.filter((item): item is NormRow => 
@@ -163,8 +168,8 @@ const NormsPage: React.FC = () => {
 
   const setActiveNormFile = async (normFileId: string) => {
     try {
-      const response = await fetch(buildNormsUrl(`/files/${normFileId}/set-active`), {
-        method: 'POST',
+      const response = await fetch(buildNormsUrl(`/import/batches/${normFileId}/activate`), {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -212,8 +217,9 @@ const NormsPage: React.FC = () => {
     try {
       const formData = new FormData()
       formData.append('file', selectedFile)
+      formData.append('description', `Norma Minsal - ${new Date().toLocaleDateString()}`)
 
-      const response = await fetch(buildNormsUrl('/upload'), {
+      const response = await fetch(buildNormsUrl('/import/csv'), {
         method: 'POST',
         body: formData,
       })
@@ -258,20 +264,6 @@ const NormsPage: React.FC = () => {
     )
   }
 
-  const getNormTypeTag = (type: string) => {
-    const typeConfig = {
-      GRD: { color: 'blue', text: 'GRD' },
-      FONASA: { color: 'green', text: 'FONASA' },
-      CUSTOM: { color: 'orange', text: 'Personalizada' }
-    }
-    
-    const config = typeConfig[type as keyof typeof typeConfig] || typeConfig.CUSTOM
-    return (
-      <Tag color={config.color}>
-        {config.text}
-      </Tag>
-    )
-  }
 
   const handleViewNormFile = (normFile: NormFile) => {
     setSelectedNormFile(normFile)
@@ -296,7 +288,7 @@ const NormsPage: React.FC = () => {
             <Text strong>{filename}</Text>
             {record.isActive && (
               <div>
-                <Tag color="gold" icon={<StarFilledOutlined />}>
+                <Tag color="gold" icon={<StarFilled />}>
                   Norma Activa
                 </Tag>
               </div>
@@ -306,16 +298,11 @@ const NormsPage: React.FC = () => {
       ),
     },
     {
-      title: 'Tipo',
-      dataIndex: 'normType',
-      key: 'normType',
-      render: (type: string) => getNormTypeTag(type),
-    },
-    {
-      title: 'Versión',
-      dataIndex: 'version',
-      key: 'version',
-      width: 100,
+      title: 'Descripción',
+      dataIndex: 'description',
+      key: 'description',
+      width: 200,
+      render: (description: string) => description || '-',
     },
     {
       title: 'Estado',
@@ -393,67 +380,100 @@ const NormsPage: React.FC = () => {
 
   const normRowsColumns: TableColumnsType<NormRow> = [
     {
-      title: 'Código',
-      dataIndex: 'codigo',
-      key: 'codigo',
-      width: 120,
+      title: 'GRD',
+      dataIndex: 'grd',
+      key: 'grd',
+      width: 100,
       fixed: 'left',
     },
     {
-      title: 'Descripción',
-      dataIndex: 'descripcion',
-      key: 'descripcion',
-      width: 200,
+      title: 'Tipo GRD',
+      dataIndex: 'tipoGrd',
+      key: 'tipoGrd',
+      width: 100,
     },
     {
-      title: 'Categoría',
-      dataIndex: 'categoria',
-      key: 'categoria',
+      title: 'Gravedad',
+      dataIndex: 'gravedad',
+      key: 'gravedad',
+      width: 80,
+    },
+    {
+      title: 'Total Altas',
+      dataIndex: 'totalAltas',
+      key: 'totalAltas',
+      width: 100,
+      render: (value: number) => value || '-',
+    },
+    {
+      title: 'Total Estancias',
+      dataIndex: 'totalEst',
+      key: 'totalEst',
       width: 120,
+      render: (value: number) => value || '-',
     },
     {
-      title: 'Subcategoría',
-      dataIndex: 'subcategoria',
-      key: 'subcategoria',
+      title: 'Estancia Media',
+      dataIndex: 'estMedia',
+      key: 'estMedia',
       width: 120,
+      render: (value: number) => value ? value.toFixed(2) : '-',
     },
     {
-      title: 'Valor',
-      dataIndex: 'valor',
-      key: 'valor',
+      title: 'Altas Depuradas',
+      dataIndex: 'altasDepu',
+      key: 'altasDepu',
+      width: 120,
+      render: (value: number) => value || '-',
+    },
+    {
+      title: 'Peso Total',
+      dataIndex: 'pesoTotal',
+      key: 'pesoTotal',
       width: 100,
       render: (value: number) => value ? value.toFixed(2) : '-',
     },
     {
-      title: 'Unidad',
-      dataIndex: 'unidad',
-      key: 'unidad',
-      width: 80,
+      title: 'Peso Total Depurado',
+      dataIndex: 'pesoTotalDepu',
+      key: 'pesoTotalDepu',
+      width: 150,
+      render: (value: number) => value ? value.toFixed(2) : '-',
     },
     {
-      title: 'Fecha Vigencia',
-      dataIndex: 'fechaVigencia',
-      key: 'fechaVigencia',
+      title: 'Percentil 25',
+      dataIndex: 'percentil25',
+      key: 'percentil25',
+      width: 100,
+      render: (value: number) => value || '-',
+    },
+    {
+      title: 'Percentil 50',
+      dataIndex: 'percentil50',
+      key: 'percentil50',
+      width: 100,
+      render: (value: number) => value || '-',
+    },
+    {
+      title: 'Percentil 75',
+      dataIndex: 'percentil75',
+      key: 'percentil75',
+      width: 100,
+      render: (value: number) => value || '-',
+    },
+    {
+      title: 'Punto Corte Inf.',
+      dataIndex: 'puntoCorteInferior',
+      key: 'puntoCorteInferior',
       width: 120,
-      render: (value: string) => value ? new Date(value).toLocaleDateString() : '-',
+      render: (value: number) => value || '-',
     },
     {
-      title: 'Fecha Vencimiento',
-      dataIndex: 'fechaVencimiento',
-      key: 'fechaVencimiento',
+      title: 'Punto Corte Sup.',
+      dataIndex: 'puntoCorteSuperior',
+      key: 'puntoCorteSuperior',
       width: 120,
-      render: (value: string) => value ? new Date(value).toLocaleDateString() : '-',
-    },
-    {
-      title: 'Estado',
-      dataIndex: 'activo',
-      key: 'activo',
-      width: 80,
-      render: (activo: boolean) => (
-        <Tag color={activo ? 'success' : 'default'}>
-          {activo ? 'Activo' : 'Inactivo'}
-        </Tag>
-      ),
+      render: (value: number) => value || '-',
     },
   ]
 
@@ -486,10 +506,10 @@ const NormsPage: React.FC = () => {
             </Button>
           </div>
           <Title level={2} style={{ color: 'var(--uc-gray-900)', marginBottom: '0.5rem' }}>
-            Gestión de Normas GRD-FONASA
+            Gestión de Norma Minsal
           </Title>
           <Text type="secondary" style={{ fontSize: '1.1rem' }}>
-            Administración de archivos de normas para codificación de episodios médicos
+            Administración de archivos CSV de Norma Minsal para codificación GRD-FONASA
           </Text>
         </div>
 
@@ -517,7 +537,6 @@ const NormsPage: React.FC = () => {
                     <Space>
                       <FileTextOutlined />
                       {file.filename}
-                      <Tag color="blue">{file.version}</Tag>
                       {file.isActive && <Tag color="gold">Activa</Tag>}
                     </Space>
                   </Option>
@@ -547,7 +566,8 @@ const NormsPage: React.FC = () => {
                         O haz clic para seleccionar un archivo
                       </p>
                       <p style={{ color: 'var(--uc-gray-500)', fontSize: '0.9rem', marginTop: '1rem' }}>
-                        Formato requerido: CSV con columnas: código, descripción, categoría, valor, unidad<br />
+                        Formato requerido: CSV de Norma Minsal con separador ';' y codificación latin-1<br />
+                        Columnas: GRD, Tipo GRD, GRAVEDAD, Total Altas, Est Media, Peso Total, etc.<br />
                         Máximo 5MB
                       </p>
                     </Upload.Dragger>
@@ -664,18 +684,15 @@ const NormsPage: React.FC = () => {
               <Descriptions.Item label="Archivo">
                 {selectedNormFile.filename}
               </Descriptions.Item>
-              <Descriptions.Item label="Tipo">
-                {getNormTypeTag(selectedNormFile.normType)}
-              </Descriptions.Item>
-              <Descriptions.Item label="Versión">
-                {selectedNormFile.version}
+              <Descriptions.Item label="Descripción">
+                {selectedNormFile.description || 'Sin descripción'}
               </Descriptions.Item>
               <Descriptions.Item label="Estado">
                 {getStatusTag(selectedNormFile.status)}
               </Descriptions.Item>
               {selectedNormFile.isActive && (
                 <Descriptions.Item label="Estado">
-                  <Tag color="gold" icon={<StarFilledOutlined />}>
+                  <Tag color="gold" icon={<StarFilled />}>
                     Norma Activa
                   </Tag>
                 </Descriptions.Item>

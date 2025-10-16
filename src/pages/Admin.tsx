@@ -134,10 +134,10 @@ const AdminPage: React.FC = () => {
                   }} 
                 />
                 <Typography.Title level={4} style={{ color: 'var(--uc-gray-900)', marginBottom: '0.5rem' }}>
-                  Gestión de Normas
+                  Gestión de Norma Minsal
                 </Typography.Title>
                 <Typography.Paragraph style={{ color: 'var(--uc-gray-600)', marginBottom: '1rem' }}>
-                  Administrar archivos de normas GRD-FONASA para codificación
+                  Administrar archivos CSV de Norma Minsal para codificación GRD-FONASA
                 </Typography.Paragraph>
                 <Button type="primary" icon={<BookOutlined />} size="large">
                   Acceder
