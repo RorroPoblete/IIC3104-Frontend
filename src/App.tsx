@@ -6,6 +6,7 @@ import LoginPage from './pages/Login'
 import LoginCallback from './pages/LoginCallback'
 import AdminPage from './pages/Admin'
 import CodificationPage from './pages/Codification'
+import NormsPage from './pages/NormsPage'
 
 const RequireAdmin: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   const { isAuthenticated, user, loading } = useAuth()
@@ -35,6 +36,14 @@ function App() {
           element={
             <RequireAdmin>
               <CodificationPage />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="/norms"
+          element={
+            <RequireAdmin>
+              <NormsPage />
             </RequireAdmin>
           }
         />
