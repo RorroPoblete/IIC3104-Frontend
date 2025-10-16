@@ -327,22 +327,7 @@ const CodificationPage: React.FC = () => {
     }
   }
 
-  const handleCellChange = React.useCallback((key: string, field: string, value: unknown) => {
-    // Validaciones de seguridad
-    if (!key || !field) {
-      console.warn('handleCellChange: key o field no válidos', { key, field, value })
-      return
-    }
-
-    // Actualizar solo los valores de edición, no modifiedData
-    setEditingValues(prev => ({
-      ...prev,
-      [key]: {
-        ...(prev[key] ?? {}),
-        [field]: value
-      }
-    }))
-  }, [])
+  // Función removida ya que no se utiliza
 
   const handleSaveAllChanges = async () => {
     setSaving(true)

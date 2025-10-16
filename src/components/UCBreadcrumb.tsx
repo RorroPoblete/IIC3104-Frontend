@@ -42,7 +42,7 @@ const UCBreadcrumb: React.FC = () => {
   return (
     <Breadcrumb 
       style={{ marginBottom: '1rem' }}
-      items={breadcrumbItems.map((item, index) => ({
+      items={breadcrumbItems.map((item) => ({
         title: (
           <span 
             style={{ 
