@@ -26,6 +26,11 @@ const UCBreadcrumb: React.FC = () => {
           { title: 'Dashboard', path: '/admin', icon: <HomeOutlined /> },
           { title: 'Codificación GRD', icon: <FileTextOutlined /> }
         ];
+      case '/norms':
+        return [
+          { title: 'Dashboard', path: '/admin', icon: <HomeOutlined /> },
+          { title: 'Norma Minsal' }
+        ];
       default:
         return [
           { title: 'Dashboard', path: '/admin', icon: <HomeOutlined /> }

@@ -7,7 +7,8 @@ import {
   BarChartOutlined,
   SettingOutlined,
   TeamOutlined,
-  MedicineBoxOutlined
+  MedicineBoxOutlined,
+  BookOutlined
 } from '@ant-design/icons'
 import { useAuth } from '../components/AuthContext'
 import { useNavigate } from 'react-router-dom'
@@ -25,6 +26,10 @@ const AdminPage: React.FC = () => {
 
   const handleNavigateToCodification = () => {
     navigate('/codification')
+  }
+
+  const handleNavigateToNorms = () => {
+    navigate('/norms')
   }
 
   return (
@@ -85,7 +90,7 @@ const AdminPage: React.FC = () => {
 
         {/* Quick Actions */}
         <Row gutter={[16, 16]} style={{ marginBottom: '2rem' }}>
-          <Col xs={24} sm={12} lg={8}>
+          <Col xs={24} sm={12} lg={6}>
             <Card 
               className="uc-card" 
               hoverable
@@ -113,7 +118,35 @@ const AdminPage: React.FC = () => {
             </Card>
           </Col>
           
-          <Col xs={24} sm={12} lg={8}>
+          <Col xs={24} sm={12} lg={6}>
+            <Card 
+              className="uc-card" 
+              hoverable
+              onClick={handleNavigateToNorms}
+              style={{ cursor: 'pointer', height: '100%' }}
+            >
+              <div style={{ textAlign: 'center' }}>
+                <BookOutlined 
+                  style={{ 
+                    fontSize: '2.5rem', 
+                    color: 'var(--uc-primary-blue)',
+                    marginBottom: '1rem'
+                  }} 
+                />
+                <Typography.Title level={4} style={{ color: 'var(--uc-gray-900)', marginBottom: '0.5rem' }}>
+                  Gestión de Norma Minsal
+                </Typography.Title>
+                <Typography.Paragraph style={{ color: 'var(--uc-gray-600)', marginBottom: '1rem' }}>
+                  Administrar archivos CSV de Norma Minsal para codificación GRD-FONASA
+                </Typography.Paragraph>
+                <Button type="primary" icon={<BookOutlined />} size="large">
+                  Acceder
+                </Button>
+              </div>
+            </Card>
+          </Col>
+          
+          <Col xs={24} sm={12} lg={6}>
             <Card className="uc-card" hoverable style={{ cursor: 'pointer', height: '100%' }}>
               <div style={{ textAlign: 'center' }}>
                 <BarChartOutlined 
@@ -136,7 +169,7 @@ const AdminPage: React.FC = () => {
             </Card>
           </Col>
           
-          <Col xs={24} sm={12} lg={8}>
+          <Col xs={24} sm={12} lg={6}>
             <Card className="uc-card" hoverable style={{ cursor: 'pointer', height: '100%' }}>
               <div style={{ textAlign: 'center' }}>
                 <SettingOutlined 
