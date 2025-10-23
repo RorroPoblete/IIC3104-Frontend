@@ -152,7 +152,7 @@ const NormsPage: React.FC = () => {
           ? result.data.data
           : []
         
-        const validRows: NormRow[] = rawData.filter((item): item is NormRow => 
+        const validRows: NormRow[] = (rawData || []).filter((item): item is NormRow => 
           typeof item === 'object' && item !== null && 'id' in item
         ) as NormRow[]
 
@@ -530,7 +530,7 @@ const NormsPage: React.FC = () => {
               style={{ width: 300 }}
               placeholder="Seleccionar norma activa"
             >
-              {normFiles
+              {(normFiles || [])
                 .filter(file => file.status === 'COMPLETED' || file.status === 'PARTIALLY_COMPLETED')
                 .map(file => (
                   <Option key={file.id} value={file.id}>
@@ -768,7 +768,7 @@ const NormsPage: React.FC = () => {
         >
           <Table
             columns={normRowsColumns}
-            dataSource={normRows.filter(item => item && item.id)}
+            dataSource={(normRows || []).filter(item => item && item.id)}
             rowKey="id"
             pagination={{
               pageSize: 20,
@@ -787,3 +787,4 @@ const NormsPage: React.FC = () => {
 }
 
 export default NormsPage
+
