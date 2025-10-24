@@ -152,7 +152,7 @@ const NormsPage: React.FC = () => {
           ? result.data.data
           : []
         
-        const validRows: NormRow[] = (rawData || []).filter((item): item is NormRow => 
+        const validRows: NormRow[] = rawData.filter((item): item is NormRow => 
           typeof item === 'object' && item !== null && 'id' in item
         ) as NormRow[]
 
@@ -194,12 +194,8 @@ const NormsPage: React.FC = () => {
 
   const handleFileSelect = (file: File) => {
     const isCSV = file.type === 'text/csv' || file.name.endsWith('.csv')
-    const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || 
-                   file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-                   file.type === 'application/vnd.ms-excel'
-    
-    if (!isCSV && !isExcel) {
-      message.error('Solo se permiten archivos CSV y Excel (.xlsx, .xls)')
+    if (!isCSV) {
+      message.error('Solo se permiten archivos CSV')
       return false
     }
     const isLt5M = file.size / 1024 / 1024 < 5
@@ -246,7 +242,7 @@ const NormsPage: React.FC = () => {
 
   const uploadProps: UploadProps = {
     name: 'file',
-    accept: '.csv,.xlsx,.xls',
+    accept: '.csv',
     beforeUpload: handleFileSelect,
     showUploadList: false,
   }
@@ -534,7 +530,7 @@ const NormsPage: React.FC = () => {
               style={{ width: 300 }}
               placeholder="Seleccionar norma activa"
             >
-              {(normFiles || [])
+              {normFiles
                 .filter(file => file.status === 'COMPLETED' || file.status === 'PARTIALLY_COMPLETED')
                 .map(file => (
                   <Option key={file.id} value={file.id}>
@@ -564,15 +560,13 @@ const NormsPage: React.FC = () => {
                         <UploadOutlined style={{ fontSize: '3rem', color: 'var(--uc-primary-blue)' }} />
                       </p>
                       <p className="ant-upload-text" style={{ fontSize: '1.2rem', fontWeight: 600 }}>
-                        Arrastra tu archivo de normas (CSV o Excel) aquí
+                        Arrastra tu archivo de normas CSV aquí
                       </p>
                       <p className="ant-upload-hint" style={{ fontSize: '1rem' }}>
                         O haz clic para seleccionar un archivo
                       </p>
                       <p style={{ color: 'var(--uc-gray-500)', fontSize: '0.9rem', marginTop: '1rem' }}>
-                        Formatos soportados: CSV o Excel (.xlsx, .xls) de Norma Minsal<br />
-                        CSV: separador ';' y codificación latin-1<br />
-                        Excel: primera hoja será procesada automáticamente<br />
+                        Formato requerido: CSV de Norma Minsal con separador ';' y codificación latin-1<br />
                         Columnas: GRD, Tipo GRD, GRAVEDAD, Total Altas, Est Media, Peso Total, etc.<br />
                         Máximo 5MB
                       </p>
@@ -774,7 +768,7 @@ const NormsPage: React.FC = () => {
         >
           <Table
             columns={normRowsColumns}
-            dataSource={(normRows || []).filter(item => item && item.id)}
+            dataSource={normRows.filter(item => item && item.id)}
             rowKey="id"
             pagination={{
               pageSize: 20,
@@ -793,4 +787,3 @@ const NormsPage: React.FC = () => {
 }
 
 export default NormsPage
-
