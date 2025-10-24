@@ -194,8 +194,12 @@ const NormsPage: React.FC = () => {
 
   const handleFileSelect = (file: File) => {
     const isCSV = file.type === 'text/csv' || file.name.endsWith('.csv')
-    if (!isCSV) {
-      message.error('Solo se permiten archivos CSV')
+    const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || 
+                   file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+                   file.type === 'application/vnd.ms-excel'
+    
+    if (!isCSV && !isExcel) {
+      message.error('Solo se permiten archivos CSV y Excel (.xlsx, .xls)')
       return false
     }
     const isLt5M = file.size / 1024 / 1024 < 5
@@ -242,7 +246,7 @@ const NormsPage: React.FC = () => {
 
   const uploadProps: UploadProps = {
     name: 'file',
-    accept: '.csv',
+    accept: '.csv,.xlsx,.xls',
     beforeUpload: handleFileSelect,
     showUploadList: false,
   }
@@ -560,13 +564,15 @@ const NormsPage: React.FC = () => {
                         <UploadOutlined style={{ fontSize: '3rem', color: 'var(--uc-primary-blue)' }} />
                       </p>
                       <p className="ant-upload-text" style={{ fontSize: '1.2rem', fontWeight: 600 }}>
-                        Arrastra tu archivo de normas CSV aquí
+                        Arrastra tu archivo de normas (CSV o Excel) aquí
                       </p>
                       <p className="ant-upload-hint" style={{ fontSize: '1rem' }}>
                         O haz clic para seleccionar un archivo
                       </p>
                       <p style={{ color: 'var(--uc-gray-500)', fontSize: '0.9rem', marginTop: '1rem' }}>
-                        Formato requerido: CSV de Norma Minsal con separador ';' y codificación latin-1<br />
+                        Formatos soportados: CSV o Excel (.xlsx, .xls) de Norma Minsal<br />
+                        CSV: separador ';' y codificación latin-1<br />
+                        Excel: primera hoja será procesada automáticamente<br />
                         Columnas: GRD, Tipo GRD, GRAVEDAD, Total Altas, Est Media, Peso Total, etc.<br />
                         Máximo 5MB
                       </p>
