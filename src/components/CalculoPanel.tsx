@@ -35,6 +35,12 @@ interface CalculoBreakdown {
   precioBase: number
   ir: number
   subtotal: number
+  ajustes: {
+    ajustesTecnologia: number
+    diasEspera: number
+    outlierSuperior: number
+    totalAjustes: number
+  }
   totalFinal: number
   fuentes: {
     norma: string | null
@@ -267,25 +273,74 @@ const CalculoPanel: React.FC<CalculoPanelProps> = ({ visible, episodioId, onClos
                 style={{ marginBottom: '1rem' }}
               >
                 <Descriptions column={1} bordered size="small">
-                  <Descriptions.Item label="Precio Base">
-                    ${ultimoCalculo.precioBase.toLocaleString('es-CL')}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="IR (Peso Relativo)">
-                    {ultimoCalculo.ir.toFixed(2)}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Subtotal">
-                    ${ultimoCalculo.subtotal.toLocaleString('es-CL')}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Total Final">
-                    <Text strong style={{ fontSize: '16px', color: '#1890ff' }}>
-                      ${ultimoCalculo.totalFinal.toLocaleString('es-CL')}
-                    </Text>
-                  </Descriptions.Item>
                   <Descriptions.Item label="Convenio">
                     {ultimoCalculo.convenio || 'N/A'}
                   </Descriptions.Item>
                   <Descriptions.Item label="GRD">
                     {ultimoCalculo.grd || 'N/A'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Precio Base">
+                    <Text strong>${ultimoCalculo.precioBase.toLocaleString('es-CL')}</Text>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="IR (Peso Relativo)">
+                    <Text strong>{ultimoCalculo.ir.toFixed(2)}</Text>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Subtotal (Precio Base × IR)">
+                    <Text strong style={{ fontSize: '14px' }}>
+                      ${ultimoCalculo.subtotal.toLocaleString('es-CL')}
+                    </Text>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Ajustes Adicionales">
+                    <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Text type="secondary">Ajustes por Tecnología:</Text>
+                        <Text>
+                          ${ultimoCalculo.ajustes?.ajustesTecnologia?.toLocaleString('es-CL') || '0'}
+                        </Text>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Text type="secondary">Días de Espera:</Text>
+                        <Text>
+                          ${ultimoCalculo.ajustes?.diasEspera?.toLocaleString('es-CL') || '0'}
+                        </Text>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Text type="secondary">Outlier Superior:</Text>
+                        <Text>
+                          ${ultimoCalculo.ajustes?.outlierSuperior?.toLocaleString('es-CL') || '0'}
+                        </Text>
+                      </div>
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        borderTop: '1px solid #d9d9d9',
+                        paddingTop: '4px',
+                        marginTop: '4px'
+                      }}>
+                        <Text strong>Total Ajustes:</Text>
+                        <Text strong>
+                          ${(ultimoCalculo.ajustes?.totalAjustes || 0).toLocaleString('es-CL')}
+                        </Text>
+                      </div>
+                    </Space>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Fórmula del Cálculo">
+                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                      Subtotal + Total Ajustes = Total Final
+                    </Text>
+                    <div style={{ marginTop: '4px' }}>
+                      <Text style={{ fontSize: '13px' }}>
+                        ${ultimoCalculo.subtotal.toLocaleString('es-CL')} + ${(ultimoCalculo.ajustes?.totalAjustes || 0).toLocaleString('es-CL')} = 
+                        <Text strong style={{ fontSize: '14px', marginLeft: '4px' }}>
+                          ${ultimoCalculo.totalFinal.toLocaleString('es-CL')}
+                        </Text>
+                      </Text>
+                    </div>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Total Final">
+                    <Text strong style={{ fontSize: '18px', color: '#1890ff' }}>
+                      ${ultimoCalculo.totalFinal.toLocaleString('es-CL')}
+                    </Text>
                   </Descriptions.Item>
                   <Descriptions.Item label="Fuentes">
                     <Space direction="vertical" size="small">
@@ -372,25 +427,74 @@ const CalculoPanel: React.FC<CalculoPanelProps> = ({ visible, episodioId, onClos
             <Descriptions.Item label="Versión">
               {detalleCalculo.version}
             </Descriptions.Item>
-            <Descriptions.Item label="Precio Base">
-              ${detalleCalculo.breakdown.precioBase.toLocaleString('es-CL')}
-            </Descriptions.Item>
-            <Descriptions.Item label="IR (Peso Relativo)">
-              {detalleCalculo.breakdown.ir.toFixed(2)}
-            </Descriptions.Item>
-            <Descriptions.Item label="Subtotal">
-              ${detalleCalculo.breakdown.subtotal.toLocaleString('es-CL')}
-            </Descriptions.Item>
-            <Descriptions.Item label="Total Final">
-              <Text strong style={{ fontSize: '16px', color: '#1890ff' }}>
-                ${detalleCalculo.breakdown.totalFinal.toLocaleString('es-CL')}
-              </Text>
-            </Descriptions.Item>
             <Descriptions.Item label="Convenio">
               {detalleCalculo.breakdown.convenio || 'N/A'}
             </Descriptions.Item>
             <Descriptions.Item label="GRD">
               {detalleCalculo.breakdown.grd || 'N/A'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Precio Base">
+              <Text strong>${detalleCalculo.breakdown.precioBase.toLocaleString('es-CL')}</Text>
+            </Descriptions.Item>
+            <Descriptions.Item label="IR (Peso Relativo)">
+              <Text strong>{detalleCalculo.breakdown.ir.toFixed(2)}</Text>
+            </Descriptions.Item>
+            <Descriptions.Item label="Subtotal (Precio Base × IR)">
+              <Text strong style={{ fontSize: '14px' }}>
+                ${detalleCalculo.breakdown.subtotal.toLocaleString('es-CL')}
+              </Text>
+            </Descriptions.Item>
+            <Descriptions.Item label="Ajustes Adicionales">
+              <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Text type="secondary">Ajustes por Tecnología:</Text>
+                  <Text>
+                    ${detalleCalculo.breakdown.ajustes?.ajustesTecnologia?.toLocaleString('es-CL') || '0'}
+                  </Text>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Text type="secondary">Días de Espera:</Text>
+                  <Text>
+                    ${detalleCalculo.breakdown.ajustes?.diasEspera?.toLocaleString('es-CL') || '0'}
+                  </Text>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Text type="secondary">Outlier Superior:</Text>
+                  <Text>
+                    ${detalleCalculo.breakdown.ajustes?.outlierSuperior?.toLocaleString('es-CL') || '0'}
+                  </Text>
+                </div>
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  borderTop: '1px solid #d9d9d9',
+                  paddingTop: '4px',
+                  marginTop: '4px'
+                }}>
+                  <Text strong>Total Ajustes:</Text>
+                  <Text strong>
+                    ${(detalleCalculo.breakdown.ajustes?.totalAjustes || 0).toLocaleString('es-CL')}
+                  </Text>
+                </div>
+              </Space>
+            </Descriptions.Item>
+            <Descriptions.Item label="Fórmula del Cálculo">
+              <Text type="secondary" style={{ fontSize: '12px' }}>
+                Subtotal + Total Ajustes = Total Final
+              </Text>
+              <div style={{ marginTop: '4px' }}>
+                <Text style={{ fontSize: '13px' }}>
+                  ${detalleCalculo.breakdown.subtotal.toLocaleString('es-CL')} + ${(detalleCalculo.breakdown.ajustes?.totalAjustes || 0).toLocaleString('es-CL')} = 
+                  <Text strong style={{ fontSize: '14px', marginLeft: '4px' }}>
+                    ${detalleCalculo.breakdown.totalFinal.toLocaleString('es-CL')}
+                  </Text>
+                </Text>
+              </div>
+            </Descriptions.Item>
+            <Descriptions.Item label="Total Final">
+              <Text strong style={{ fontSize: '18px', color: '#1890ff' }}>
+                ${detalleCalculo.breakdown.totalFinal.toLocaleString('es-CL')}
+              </Text>
             </Descriptions.Item>
             <Descriptions.Item label="Fecha de Referencia">
               {detalleCalculo.fechaReferencia
