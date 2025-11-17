@@ -234,6 +234,7 @@ const CodificationPage: React.FC = () => {
   const [editingValues, setEditingValues] = useState<Record<string, Record<string, unknown>>>({})
   const [calculoPanelVisible, setCalculoPanelVisible] = useState(false)
   const [selectedEpisodioId, setSelectedEpisodioId] = useState<string | null>(null)
+  const [episodioSearch, setEpisodioSearch] = useState('')
 
   const handleLogout = () => {
     logout()
@@ -1340,6 +1341,41 @@ const CodificationPage: React.FC = () => {
     }
   })
 
+  // Filtrar episodios basado en búsqueda
+  const filteredEpisodios = modifiedData.filter((item) => {
+    if (!item || !item.id) return false
+    if (!episodioSearch.trim()) return true
+
+    const searchTerm = episodioSearch.toLowerCase().trim()
+    
+    // Función helper para convertir a string y limpiar
+    const toSearchableString = (value: unknown): string => {
+      if (value === null || value === undefined) return ''
+      return String(value).trim().toLowerCase()
+    }
+    
+    // Buscar en múltiples campos relevantes (incluyendo descripciones)
+    const searchableFields = [
+      item.id,
+      item.episodioCmbd,
+      item.conveniosCod,
+      item.conveniosDesc, // Agregar descripción del convenio
+      item.irGrdCodigo,
+      item.irGrd,
+      item.proced01Principal,
+      item.conjuntoProcedimientosSecundarios,
+      item.servicioSaludCod,
+      item.servicioSaludDesc, // Agregar descripción del servicio
+      item.previsionCod,
+      item.previsionDesc, // Agregar descripción de previsión
+      item.irGrd, // GRD completo
+      item.diagnosticoPrincipal,
+      item.especialidadMedica,
+    ].map(toSearchableString).filter(field => field.length > 0)
+
+    return searchableFields.some(field => field.includes(searchTerm))
+  })
+
   return (
     <div className="admin-page">
       <UCHeader 
@@ -1570,9 +1606,15 @@ const CodificationPage: React.FC = () => {
           }
 
           open={dataModalVisible}
-          onCancel={() => setDataModalVisible(false)}
+          onCancel={() => {
+            setDataModalVisible(false)
+            setEpisodioSearch('') // Limpiar búsqueda al cerrar
+          }}
           footer={[
-            <Button key="close" onClick={() => setDataModalVisible(false)}>
+            <Button key="close" onClick={() => {
+              setDataModalVisible(false)
+              setEpisodioSearch('') // Limpiar búsqueda al cerrar
+            }}>
               Cerrar
             </Button>,
             <Button 
@@ -1613,6 +1655,34 @@ const CodificationPage: React.FC = () => {
               style={{ marginBottom: '1rem' }}
             />
           )}
+          
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <Input
+                placeholder="Buscar por ID, CMBD, Convenio (CH0041, FNS012...), GRD, Procedimiento..."
+                prefix={<SearchOutlined />}
+                value={episodioSearch}
+                onChange={(e) => setEpisodioSearch(e.target.value)}
+                allowClear
+                style={{ maxWidth: '500px', flex: '1 1 auto' }}
+              />
+              {episodioSearch && (
+                <Text type="secondary" style={{ fontSize: '0.9rem' }}>
+                  {filteredEpisodios.length} resultado(s) de {modifiedData.filter(item => item && item.id).length} total
+                </Text>
+              )}
+            </div>
+            {episodioSearch && filteredEpisodios.length === 0 && (
+              <Alert
+                message="No se encontraron resultados"
+                description={`No hay episodios que coincidan con "${episodioSearch}". Intenta buscar por otro término o verifica que los datos estén cargados.`}
+                type="info"
+                showIcon
+                style={{ marginTop: '0.5rem' }}
+              />
+            )}
+          </div>
+
           <Table
             components={{
               body: {
@@ -1620,7 +1690,7 @@ const CodificationPage: React.FC = () => {
               },
             }}
             columns={mergedColumns}
-            dataSource={modifiedData.filter(item => item && item.id)} // Filtrar elementos válidos
+            dataSource={filteredEpisodios}
             rowKey="id"
             pagination={{
               pageSize: 10,
