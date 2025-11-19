@@ -31,6 +31,16 @@ const UCBreadcrumb: React.FC = () => {
           { title: 'Dashboard', path: '/admin', icon: <HomeOutlined /> },
           { title: 'Norma Minsal' }
         ];
+      case '/pricing':
+        return [
+          { title: 'Dashboard', path: '/admin', icon: <HomeOutlined /> },
+          { title: 'Gestión de Precios' }
+        ];
+      case '/ajustes':
+        return [
+          { title: 'Dashboard', path: '/admin', icon: <HomeOutlined /> },
+          { title: 'Ajustes por Tecnología' }
+        ];
       default:
         return [
           { title: 'Dashboard', path: '/admin', icon: <HomeOutlined /> }
