@@ -17,14 +17,13 @@ import {
   CalculatorOutlined,
   ReloadOutlined,
   EyeOutlined,
-  CheckCircleOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons'
 import { useAuth } from './AuthContext'
 import { authFetch } from '../utils/authFetch'
 import type { TableColumnsType } from 'antd'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 const API_BASE_URL = (import.meta.env.VITE_BACKEND_BASE_URL ?? 'http://localhost:3000').replace(/\/+$/, '')
 
@@ -81,7 +80,6 @@ interface CalculoPanelProps {
 
 const CalculoPanel: React.FC<CalculoPanelProps> = ({ visible, episodioId, onClose }) => {
   const { getAccessTokenSilently } = useAuth()
-  const [loading, setLoading] = useState(false)
   const [recalculando, setRecalculando] = useState(false)
   const [ultimoCalculo, setUltimoCalculo] = useState<CalculoBreakdown | null>(null)
   const [versiones, setVersiones] = useState<CalculoVersion[]>([])

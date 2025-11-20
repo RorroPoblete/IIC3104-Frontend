@@ -57,7 +57,6 @@ const buildPricingUrl = (path: string) => {
 
 const { Title, Text } = Typography
 const { Option } = Select
-const { TextArea } = Input
 
 interface PricingFile {
   id: string
