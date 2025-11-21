@@ -36,12 +36,14 @@ import {
   EditOutlined,
   SaveOutlined,
   CloseOutlined,
-  UndoOutlined
+  UndoOutlined,
+  CalculatorOutlined
 } from '@ant-design/icons'
 import { useAuth } from '../components/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import UCHeader from '../components/UCHeader'
 import UCBreadcrumb from '../components/UCBreadcrumb'
+import CalculoPanel from '../components/CalculoPanel'
 import type { UploadProps, TableColumnsType} from 'antd'
 import type { ColumnType } from 'antd/es/table'
 
@@ -93,10 +95,18 @@ interface NormalizedData {
   estanciaEpisodio?: number
   pesoGrdMedio?: number
   irGrd?: string
+  irGrdCodigo?: string
+  irGravedad?: string
   facturacionTotal?: number
   anio?: number
   mes?: number
   diagnosticoPrincipal?: string
+  // Datos enriquecidos desde Norma MINSAL
+  pesoTotalNorma?: number | null
+  pesoTotalDepuNorma?: number | null
+  estMediaNorma?: number | null
+  gravedadNorma?: string | null
+  tieneNorma?: boolean
   createdAt: string
   updatedAt: string
   [key: string]: unknown
@@ -110,6 +120,9 @@ const NUMERIC_FIELD_KEYS = new Set<string>([
   'estanciasPostquirurgicas',
   'estanciaEpisodio',
   'estanciaRealEpisodio',
+  'pesoTotalNorma',
+  'pesoTotalDepuNorma',
+  'estMediaNorma',
   'horasEstancia',
   'estanciaMedia',
   'pesoGrdMedio',
@@ -219,6 +232,9 @@ const CodificationPage: React.FC = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editingValues, setEditingValues] = useState<Record<string, Record<string, unknown>>>({})
+  const [calculoPanelVisible, setCalculoPanelVisible] = useState(false)
+  const [selectedEpisodioId, setSelectedEpisodioId] = useState<string | null>(null)
+  const [episodioSearch, setEpisodioSearch] = useState('')
 
   const handleLogout = () => {
     logout()
@@ -968,6 +984,52 @@ const CodificationPage: React.FC = () => {
       editable: true,
     },
     
+    // Datos enriquecidos desde Norma MINSAL
+    {
+      title: 'Tiene Norma',
+      dataIndex: 'tieneNorma',
+      key: 'tieneNorma',
+      width: 120,
+      fixed: 'right',
+      render: (value: boolean) => (
+        <Tag color={value ? 'success' : 'default'}>
+          {value ? 'Sí' : 'Sin Norma'}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Peso Total Norma',
+      dataIndex: 'pesoTotalNorma',
+      key: 'pesoTotalNorma',
+      width: 140,
+      editable: true,
+      render: (value) => formatDecimalValue(value),
+    },
+    {
+      title: 'Peso Total Depurado Norma',
+      dataIndex: 'pesoTotalDepuNorma',
+      key: 'pesoTotalDepuNorma',
+      width: 180,
+      editable: true,
+      render: (value) => formatDecimalValue(value),
+    },
+    {
+      title: 'Estancia Media Norma',
+      dataIndex: 'estMediaNorma',
+      key: 'estMediaNorma',
+      width: 160,
+      editable: true,
+      render: (value) => formatDecimalValue(value),
+    },
+    {
+      title: 'Gravedad Norma',
+      dataIndex: 'gravedadNorma',
+      key: 'gravedadNorma',
+      width: 130,
+      editable: true,
+      render: (value: string) => value ? <Tag>{value}</Tag> : '-',
+    },
+    
     // Fechas
     {
       title: 'Fecha Ingreso',
@@ -1191,7 +1253,7 @@ const CodificationPage: React.FC = () => {
     {
       title: 'Acciones',
       key: 'actions',
-      width: 120,
+      width: 180,
       fixed: 'right',
       render: (_, record) => {
         const editable = isEditing(record)
@@ -1215,15 +1277,30 @@ const CodificationPage: React.FC = () => {
             </Button>
           </Space>
         ) : (
-          <Button
-            type="link"
-            disabled={editingKey !== ''}
-            onClick={() => edit(record)}
-            icon={<EditOutlined />}
-            size="small"
-          >
-            Editar
-          </Button>
+          <Space>
+            <Button
+              type="link"
+              disabled={editingKey !== ''}
+              onClick={() => edit(record)}
+              icon={<EditOutlined />}
+              size="small"
+            >
+              Editar
+            </Button>
+            <Button
+              type="link"
+              disabled={editingKey !== '' || !record.tieneNorma}
+              onClick={() => {
+                setSelectedEpisodioId(record.id)
+                setCalculoPanelVisible(true)
+              }}
+              icon={<CalculatorOutlined />}
+              size="small"
+              title={!record.tieneNorma ? 'El episodio debe tener norma MINSAL para calcular' : 'Calcular GRD-FONASA'}
+            >
+              Calcular
+            </Button>
+          </Space>
         )
       },
     },
@@ -1262,6 +1339,41 @@ const CodificationPage: React.FC = () => {
         editing: isEditing(record),
       }),
     }
+  })
+
+  // Filtrar episodios basado en búsqueda
+  const filteredEpisodios = modifiedData.filter((item) => {
+    if (!item || !item.id) return false
+    if (!episodioSearch.trim()) return true
+
+    const searchTerm = episodioSearch.toLowerCase().trim()
+    
+    // Función helper para convertir a string y limpiar
+    const toSearchableString = (value: unknown): string => {
+      if (value === null || value === undefined) return ''
+      return String(value).trim().toLowerCase()
+    }
+    
+    // Buscar en múltiples campos relevantes (incluyendo descripciones)
+    const searchableFields = [
+      item.id,
+      item.episodioCmbd,
+      item.conveniosCod,
+      item.conveniosDesc, // Agregar descripción del convenio
+      item.irGrdCodigo,
+      item.irGrd,
+      item.proced01Principal,
+      item.conjuntoProcedimientosSecundarios,
+      item.servicioSaludCod,
+      item.servicioSaludDesc, // Agregar descripción del servicio
+      item.previsionCod,
+      item.previsionDesc, // Agregar descripción de previsión
+      item.irGrd, // GRD completo
+      item.diagnosticoPrincipal,
+      item.especialidadMedica,
+    ].map(toSearchableString).filter(field => field.length > 0)
+
+    return searchableFields.some(field => field.includes(searchTerm))
   })
 
   return (
@@ -1494,9 +1606,15 @@ const CodificationPage: React.FC = () => {
           }
 
           open={dataModalVisible}
-          onCancel={() => setDataModalVisible(false)}
+          onCancel={() => {
+            setDataModalVisible(false)
+            setEpisodioSearch('') // Limpiar búsqueda al cerrar
+          }}
           footer={[
-            <Button key="close" onClick={() => setDataModalVisible(false)}>
+            <Button key="close" onClick={() => {
+              setDataModalVisible(false)
+              setEpisodioSearch('') // Limpiar búsqueda al cerrar
+            }}>
               Cerrar
             </Button>,
             <Button 
@@ -1537,6 +1655,34 @@ const CodificationPage: React.FC = () => {
               style={{ marginBottom: '1rem' }}
             />
           )}
+          
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <Input
+                placeholder="Buscar por ID, CMBD, Convenio (CH0041, FNS012...), GRD, Procedimiento..."
+                prefix={<SearchOutlined />}
+                value={episodioSearch}
+                onChange={(e) => setEpisodioSearch(e.target.value)}
+                allowClear
+                style={{ maxWidth: '500px', flex: '1 1 auto' }}
+              />
+              {episodioSearch && (
+                <Text type="secondary" style={{ fontSize: '0.9rem' }}>
+                  {filteredEpisodios.length} resultado(s) de {modifiedData.filter(item => item && item.id).length} total
+                </Text>
+              )}
+            </div>
+            {episodioSearch && filteredEpisodios.length === 0 && (
+              <Alert
+                message="No se encontraron resultados"
+                description={`No hay episodios que coincidan con "${episodioSearch}". Intenta buscar por otro término o verifica que los datos estén cargados.`}
+                type="info"
+                showIcon
+                style={{ marginTop: '0.5rem' }}
+              />
+            )}
+          </div>
+
           <Table
             components={{
               body: {
@@ -1544,7 +1690,7 @@ const CodificationPage: React.FC = () => {
               },
             }}
             columns={mergedColumns}
-            dataSource={modifiedData.filter(item => item && item.id)} // Filtrar elementos válidos
+            dataSource={filteredEpisodios}
             rowKey="id"
             pagination={{
               pageSize: 10,
@@ -1621,6 +1767,16 @@ const CodificationPage: React.FC = () => {
             </Text>
           </div>
         </Drawer>
+
+        {/* Panel de Cálculo GRD-FONASA */}
+        <CalculoPanel
+          visible={calculoPanelVisible}
+          episodioId={selectedEpisodioId}
+          onClose={() => {
+            setCalculoPanelVisible(false)
+            setSelectedEpisodioId(null)
+          }}
+        />
       </div>
     </div>
   )
