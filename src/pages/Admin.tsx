@@ -9,7 +9,8 @@ import {
   TeamOutlined,
   MedicineBoxOutlined,
   BookOutlined,
-  DollarOutlined
+  DollarOutlined,
+  ToolOutlined
 } from '@ant-design/icons'
 import { useAuth } from '../components/AuthContext'
 import { useNavigate } from 'react-router-dom'
@@ -35,6 +36,10 @@ const AdminPage: React.FC = () => {
 
   const handleNavigateToPricing = () => {
     navigate('/pricing')
+  }
+
+  const handleNavigateToAjustes = () => {
+    navigate('/ajustes')
   }
 
   return (
@@ -173,6 +178,34 @@ const AdminPage: React.FC = () => {
                   Administrar archivos de tarifas para cálculo de precios base GRD
                 </Typography.Paragraph>
                 <Button type="primary" icon={<DollarOutlined />} size="large">
+                  Acceder
+                </Button>
+              </div>
+            </Card>
+          </Col>
+          
+          <Col xs={24} sm={12} lg={6}>
+            <Card 
+              className="uc-card" 
+              hoverable
+              onClick={handleNavigateToAjustes}
+              style={{ cursor: 'pointer', height: '100%' }}
+            >
+              <div style={{ textAlign: 'center' }}>
+                <ToolOutlined 
+                  style={{ 
+                    fontSize: '2.5rem', 
+                    color: 'var(--uc-primary-blue)',
+                    marginBottom: '1rem'
+                  }} 
+                />
+                <Typography.Title level={4} style={{ color: 'var(--uc-gray-900)', marginBottom: '0.5rem' }}>
+                  Ajustes por Tecnología
+                </Typography.Title>
+                <Typography.Paragraph style={{ color: 'var(--uc-gray-600)', marginBottom: '1rem' }}>
+                  Administrar archivos Excel de ajustes por tecnología para cálculos GRD
+                </Typography.Paragraph>
+                <Button type="primary" icon={<ToolOutlined />} size="large">
                   Acceder
                 </Button>
               </div>
