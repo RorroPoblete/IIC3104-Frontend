@@ -32,6 +32,10 @@ const AdminPage: React.FC = () => {
     navigate('/norms')
   }
 
+  const handleNavigateToUsers = () => {
+    navigate('/admin/users')
+  }
+
   return (
     <div className="admin-page">
       <UCHeader 
@@ -216,7 +220,7 @@ const AdminPage: React.FC = () => {
             </Card>
           </Col>
           <Col xs={24} sm={12} lg={6}>
-            <Card className="uc-card">
+            <Card className="uc-card" hoverable onClick={handleNavigateToUsers} style={{ cursor: 'pointer' }}>
               <Statistic
                 title="Usuarios Activos"
                 value={1}
@@ -242,4 +246,3 @@ const AdminPage: React.FC = () => {
 }
 
 export default AdminPage
-
