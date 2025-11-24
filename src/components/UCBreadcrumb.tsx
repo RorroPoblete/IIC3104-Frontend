@@ -36,6 +36,11 @@ const UCBreadcrumb: React.FC = () => {
           { title: 'Dashboard', path: '/admin', icon: <HomeOutlined /> },
           { title: 'Gestión de Precios' }
         ];
+      case '/auditoria':
+        return [
+          { title: 'Dashboard', path: '/admin', icon: <HomeOutlined /> },
+          { title: 'Auditoría de Cambios' }
+        ];
       case '/ajustes':
         return [
           { title: 'Dashboard', path: '/admin', icon: <HomeOutlined /> },

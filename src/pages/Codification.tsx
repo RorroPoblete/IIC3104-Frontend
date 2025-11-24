@@ -44,6 +44,7 @@ import { useNavigate } from 'react-router-dom'
 import UCHeader from '../components/UCHeader'
 import UCBreadcrumb from '../components/UCBreadcrumb'
 import CalculoPanel from '../components/CalculoPanel'
+import { authFetch } from '../utils/authFetch'
 import type { UploadProps, TableColumnsType} from 'antd'
 import type { ColumnType } from 'antd/es/table'
 
@@ -141,6 +142,13 @@ const NUMERIC_FIELD_KEYS = new Set<string>([
   'emPostQuirurgica'
 ])
 
+const NON_EDITABLE_FIELDS = new Set<string>([
+  'id',
+  'batchId',
+  'createdAt',
+  'updatedAt',
+])
+
 const parseNumericValue = (value: unknown): number | null => {
   if (value === null || value === undefined || value === '') {
     return null
@@ -213,7 +221,7 @@ const sanitizeNumericFields = (row: Record<string, unknown>) => {
 }
 
 const CodificationPage: React.FC = () => {
-  const { user, logout } = useAuth()
+  const { user, logout, getAccessTokenSilently } = useAuth()
   const navigate = useNavigate()
   const [batches, setBatches] = useState<ImportBatch[]>([])
   const [loading, setLoading] = useState(false)
@@ -235,6 +243,12 @@ const CodificationPage: React.FC = () => {
   const [calculoPanelVisible, setCalculoPanelVisible] = useState(false)
   const [selectedEpisodioId, setSelectedEpisodioId] = useState<string | null>(null)
   const [episodioSearch, setEpisodioSearch] = useState('')
+
+  const buildUserHeaders = () => ({
+    ...(user?.email ? { 'x-user-email': user.email } : {}),
+    ...(user?.sub ? { 'x-user-id': user.sub } : {}),
+    ...(user?.name ? { 'x-user-name': user.name } : {}),
+  })
 
   const handleLogout = () => {
     logout()
@@ -343,18 +357,71 @@ const CodificationPage: React.FC = () => {
     }
   }
 
-  // Función removida ya que no se utiliza
+  const buildChangesPayload = () => {
+    const originalMap = normalizedData.reduce<Record<string, NormalizedData>>((acc, row) => {
+      acc[row.id] = row
+      return acc
+    }, {})
+
+    const changes: Array<{ id: string; updates: Record<string, unknown> }> = []
+
+    modifiedData.forEach((row) => {
+      const original = originalMap[row.id]
+      if (!original) return
+
+      const updates: Record<string, unknown> = {}
+
+      Object.keys(row).forEach((field) => {
+        if (NON_EDITABLE_FIELDS.has(field)) return
+        const newValue = row[field as keyof NormalizedData]
+        const oldValue = original[field as keyof NormalizedData]
+        if (newValue !== oldValue) {
+          updates[field] = newValue === undefined ? null : newValue
+        }
+      })
+
+      if (Object.keys(updates).length > 0) {
+        changes.push({ id: row.id, updates })
+      }
+    })
+
+    return changes
+  }
 
   const handleSaveAllChanges = async () => {
+    if (!selectedBatch) {
+      message.error('Selecciona un lote antes de guardar cambios')
+      return
+    }
+
+    const changes = buildChangesPayload()
+    if (changes.length === 0) {
+      message.info('No hay cambios para guardar')
+      return
+    }
+
     setSaving(true)
     try {
-      // Aquí se enviarían todos los cambios al backend
-      // Por ahora simulamos el guardado
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      setHasUnsavedChanges(false)
-      message.success('Todos los cambios han sido guardados')
-    } catch {
-      message.error('Error al guardar los cambios')
+      const response = await authFetch(
+        buildCodificationUrl(`/batches/${selectedBatch.id}/normalized`),
+        {
+          method: 'PATCH',
+          headers: buildUserHeaders(),
+          body: JSON.stringify({ changes }),
+        },
+        getAccessTokenSilently
+      )
+      const result = await response.json()
+      if (result.success) {
+        message.success('Cambios guardados y auditados')
+        await fetchNormalizedData(selectedBatch.id)
+        setHasUnsavedChanges(false)
+      } else {
+        message.error(result.message || 'Error al guardar los cambios')
+      }
+    } catch (error) {
+      console.error('Error al guardar cambios', error)
+      message.error('Error de conexión al guardar los cambios')
     } finally {
       setSaving(false)
     }
@@ -415,7 +482,7 @@ const CodificationPage: React.FC = () => {
   const fetchBatches = async () => {
     setLoading(true)
     try {
-      const response = await fetch(buildCodificationUrl('/batches'))
+      const response = await authFetch(buildCodificationUrl('/batches'), {}, getAccessTokenSilently)
       const result = await response.json()
       if (result.success) {
         setBatches(result.data.batches)
@@ -431,7 +498,11 @@ const CodificationPage: React.FC = () => {
 
   const fetchNormalizedData = async (batchId: string) => {
     try {
-      const response = await fetch(buildCodificationUrl(`/batches/${batchId}/normalized`))
+      const response = await authFetch(
+        buildCodificationUrl(`/batches/${batchId}/normalized`),
+        { headers: buildUserHeaders() },
+        getAccessTokenSilently
+      )
       const result = await response.json()
 
       if (result.success && result.data && result.data.normalizedData) {
@@ -493,10 +564,15 @@ const CodificationPage: React.FC = () => {
       const formData = new FormData()
       formData.append('file', selectedFile)
 
-      const response = await fetch(buildCodificationUrl('/csv'), {
-        method: 'POST',
-        body: formData,
-      })
+      const response = await authFetch(
+        buildCodificationUrl('/csv'),
+        {
+          method: 'POST',
+          body: formData,
+          headers: buildUserHeaders(),
+        },
+        getAccessTokenSilently
+      )
 
       const result = await response.json()
       

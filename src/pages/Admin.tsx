@@ -10,7 +10,8 @@ import {
   MedicineBoxOutlined,
   BookOutlined,
   DollarOutlined,
-  ToolOutlined
+  ToolOutlined,
+  AuditOutlined
 } from '@ant-design/icons'
 import { useAuth } from '../components/AuthContext'
 import { useNavigate } from 'react-router-dom'
@@ -40,6 +41,10 @@ const AdminPage: React.FC = () => {
 
   const handleNavigateToAjustes = () => {
     navigate('/ajustes')
+  }
+
+  const handleNavigateToAudit = () => {
+    navigate('/auditoria')
   }
 
   return (
@@ -211,6 +216,34 @@ const AdminPage: React.FC = () => {
               </div>
             </Card>
           </Col>
+
+          <Col xs={24} sm={12} lg={6}>
+            <Card 
+              className="uc-card" 
+              hoverable
+              onClick={handleNavigateToAudit}
+              style={{ cursor: 'pointer', height: '100%' }}
+            >
+              <div style={{ textAlign: 'center' }}>
+                <AuditOutlined 
+                  style={{ 
+                    fontSize: '2.5rem', 
+                    color: 'var(--uc-primary-blue)',
+                    marginBottom: '1rem'
+                  }} 
+                />
+                <Typography.Title level={4} style={{ color: 'var(--uc-gray-900)', marginBottom: '0.5rem' }}>
+                  Auditoría de Cambios
+                </Typography.Title>
+                <Typography.Paragraph style={{ color: 'var(--uc-gray-600)', marginBottom: '1rem' }}>
+                  Revisa quién modificó, qué campo cambió y los valores antes/después.
+                </Typography.Paragraph>
+                <Button type="primary" icon={<AuditOutlined />} size="large">
+                  Ver auditoría
+                </Button>
+              </div>
+            </Card>
+          </Col>
           
           <Col xs={24} sm={12} lg={6}>
             <Card className="uc-card" hoverable style={{ cursor: 'pointer', height: '100%' }}>
@@ -308,4 +341,3 @@ const AdminPage: React.FC = () => {
 }
 
 export default AdminPage
-
