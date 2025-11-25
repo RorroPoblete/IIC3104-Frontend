@@ -200,8 +200,9 @@ const sanitizeNumericFields = (row: Record<string, unknown>) => {
 }
 
 const CodificationPage: React.FC = () => {
-  const { user, logout } = useAuth()
+  const { user, appUser, logout } = useAuth()
   const navigate = useNavigate()
+  const userEmail = appUser?.email ?? user?.email
   const [batches, setBatches] = useState<ImportBatch[]>([])
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -1270,7 +1271,7 @@ const CodificationPage: React.FC = () => {
         showNavigation={false}
         showUserActions={true}
         onLogout={handleLogout}
-        userName={user?.email}
+        userName={userEmail}
       />
       
       <div className="admin-content">

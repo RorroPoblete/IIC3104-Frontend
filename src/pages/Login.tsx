@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Form, Button, Card, Typography } from 'antd'
+import { Form, Button, Card, Typography, Alert } from 'antd'
 import { MedicineBoxOutlined } from '@ant-design/icons'
 import { useAuth } from '../components/AuthContext'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 const LoginPage: React.FC = () => {
-  const { loginWithRedirect, isAuthenticated, loading } = useAuth()
+  const { loginWithRedirect, isAuthorized, loading, authError, clearAuthError } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [submitting, setSubmitting] = useState(false)
@@ -17,12 +17,13 @@ const LoginPage: React.FC = () => {
   }, [location.state])
 
   useEffect(() => {
-    if (!loading && isAuthenticated) {
+    if (!loading && isAuthorized) {
       navigate(returnTo, { replace: true })
     }
-  }, [isAuthenticated, loading, navigate, returnTo])
+  }, [isAuthorized, loading, navigate, returnTo])
 
   const handleLogin = async () => {
+    clearAuthError()
     setSubmitting(true)
     try {
       await loginWithRedirect({ appState: { returnTo } })
@@ -51,6 +52,14 @@ const LoginPage: React.FC = () => {
           </div>
 
           <Form form={form} name="login" layout="vertical" size="large">
+            {authError && (
+              <Alert
+                type="error"
+                message={authError}
+                showIcon
+                style={{ marginBottom: '1rem' }}
+              />
+            )}
             <Form.Item style={{ marginBottom: '1rem' }}>
               <Button
                 type="primary"

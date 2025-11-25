@@ -9,13 +9,23 @@ import CodificationPage from './pages/Codification'
 import NormsPage from './pages/NormsPage'
 import UserManagementPage from './pages/UserManagement'
 
-const RequireAdmin: React.FC<{ children: React.ReactElement }> = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth()
+const RequireAuth: React.FC<{ children: React.ReactElement; allowedRoles?: string[] }> = ({
+  children,
+  allowedRoles
+}) => {
+  const { isAuthorized, loading, appUser } = useAuth()
   const location = useLocation()
+
   if (loading) return null
-  if (!isAuthenticated) {
+
+  if (!isAuthorized) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
+
+  if (allowedRoles && appUser && !allowedRoles.includes(appUser.role)) {
+    return <Navigate to="/login" state={{ from: location }} replace />
+  }
+
   return children
 }
 
@@ -27,33 +37,33 @@ function App() {
         <Route
           path="/admin"
           element={
-            <RequireAdmin>
+            <RequireAuth allowedRoles={['Administrador']}>
               <AdminPage />
-            </RequireAdmin>
+            </RequireAuth>
           }
         />
         <Route
           path="/codification"
           element={
-            <RequireAdmin>
+            <RequireAuth>
               <CodificationPage />
-            </RequireAdmin>
+            </RequireAuth>
           }
         />
         <Route
           path="/norms"
           element={
-            <RequireAdmin>
+            <RequireAuth>
               <NormsPage />
-            </RequireAdmin>
+            </RequireAuth>
           }
         />
         <Route
           path="/admin/users"
           element={
-            <RequireAdmin>
+            <RequireAuth allowedRoles={['Administrador']}>
               <UserManagementPage />
-            </RequireAdmin>
+            </RequireAuth>
           }
         />
         <Route path="/login/callback" element={<LoginCallback />} />

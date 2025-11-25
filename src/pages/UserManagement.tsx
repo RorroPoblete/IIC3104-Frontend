@@ -6,6 +6,7 @@ import UCHeader from '../components/UCHeader'
 import UCBreadcrumb from '../components/UCBreadcrumb'
 import { useAuth } from '../components/AuthContext'
 import { authFetch } from '../utils/authFetch'
+import { apiUrl } from '../utils/apiConfig'
 
 type ManagedUser = {
   id: string
@@ -16,17 +17,16 @@ type ManagedUser = {
 
 type UserPayload = Pick<ManagedUser, 'name' | 'email' | 'role'>
 
-const API_BASE_URL = (import.meta.env.VITE_BACKEND_BASE_URL ?? 'http://localhost:3000').replace(/\/+$/, '')
-const USERS_API_BASE = `${API_BASE_URL}/api/users`
+const USERS_API_BASE = apiUrl('/api/users')
 
 const buildUsersUrl = (path = '') => {
   if (!path) return USERS_API_BASE
-  if (path.startsWith('/')) return `${USERS_API_BASE}${path}`
-  return `${USERS_API_BASE}/${path}`
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  return `${USERS_API_BASE}${normalizedPath}`
 }
 
 const UserManagementPage: React.FC = () => {
-  const { user, logout, getAccessTokenSilently } = useAuth()
+  const { user, appUser, logout, getAccessTokenSilently } = useAuth()
   const navigate = useNavigate()
   const [form] = Form.useForm()
   const [editForm] = Form.useForm()
@@ -141,7 +141,7 @@ const UserManagementPage: React.FC = () => {
           logout()
           navigate('/login')
         }}
-        userName={user?.email}
+        userName={appUser?.email ?? user?.email}
       />
 
       <div className="admin-content">

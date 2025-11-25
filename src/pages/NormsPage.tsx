@@ -94,8 +94,9 @@ interface NormRow {
 }
 
 const NormsPage: React.FC = () => {
-  const { user, logout } = useAuth()
+  const { user, appUser, logout } = useAuth()
   const navigate = useNavigate()
+  const userEmail = appUser?.email ?? user?.email
   const [normFiles, setNormFiles] = useState<NormFile[]>([])
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -487,7 +488,7 @@ const NormsPage: React.FC = () => {
         showNavigation={false}
         showUserActions={true}
         onLogout={handleLogout}
-        userName={user?.email}
+        userName={userEmail}
       />
       
       <div className="admin-content">
