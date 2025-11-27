@@ -50,14 +50,41 @@ type AuditLog = {
   createdAt: string
 }
 
-const actionColors: Record<string, string> = {
-  CODIFICATION_IMPORT_COMPLETED: 'green',
-  CODIFICATION_IMPORT_FAILED: 'red',
-  CODIFICATION_ROW_UPDATED: 'blue',
-  NORMA_IMPORT_COMPLETED: 'green',
-  NORMA_IMPORT_FAILED: 'red',
-  NORMA_BATCH_ACTIVATED: 'purple',
-  NORMA_BATCH_DELETED: 'volcano'
+const actionDefinitions: Record<
+  string,
+  {
+    label: string
+    color: string
+  }
+> = {
+  CODIFICATION_IMPORT_COMPLETED: {
+    label: 'Importación de codificación completada',
+    color: 'green',
+  },
+  CODIFICATION_IMPORT_FAILED: {
+    label: 'Importación de codificación fallida',
+    color: 'red',
+  },
+  CODIFICATION_ROW_UPDATED: {
+    label: 'Fila de codificación actualizada',
+    color: 'blue',
+  },
+  NORMA_IMPORT_COMPLETED: {
+    label: 'Importación de Norma Minsal completada',
+    color: 'green',
+  },
+  NORMA_IMPORT_FAILED: {
+    label: 'Importación de Norma Minsal fallida',
+    color: 'red',
+  },
+  NORMA_BATCH_ACTIVATED: {
+    label: 'Lote de Norma Minsal activado',
+    color: 'purple',
+  },
+  NORMA_BATCH_DELETED: {
+    label: 'Lote de Norma Minsal eliminado',
+    color: 'volcano',
+  },
 }
 
 const AuditPage: React.FC = () => {
@@ -89,15 +116,11 @@ const AuditPage: React.FC = () => {
   })
 
   const actionOptions = useMemo(
-    () => [
-      'CODIFICATION_IMPORT_COMPLETED',
-      'CODIFICATION_IMPORT_FAILED',
-      'CODIFICATION_ROW_UPDATED',
-      'NORMA_IMPORT_COMPLETED',
-      'NORMA_IMPORT_FAILED',
-      'NORMA_BATCH_ACTIVATED',
-      'NORMA_BATCH_DELETED',
-    ],
+    () =>
+      Object.entries(actionDefinitions).map(([value, def]) => ({
+        value,
+        label: def.label,
+      })),
     []
   )
 
@@ -171,7 +194,12 @@ const AuditPage: React.FC = () => {
       title: 'Acción',
       dataIndex: 'action',
       key: 'action',
-      render: (value: string) => <Tag color={actionColors[value] || 'default'}>{value}</Tag>,
+      render: (value: string) => {
+        const def = actionDefinitions[value]
+        const label = def?.label ?? value
+        const color = def?.color ?? 'default'
+        return <Tag color={color}>{label}</Tag>
+      },
       width: 190,
     },
     {
@@ -279,8 +307,8 @@ const AuditPage: React.FC = () => {
                 style={{ width: '100%' }}
               >
                 {actionOptions.map((action) => (
-                  <Select.Option key={action} value={action}>
-                    {action}
+                  <Select.Option key={action.value} value={action.value}>
+                    {action.label}
                   </Select.Option>
                 ))}
               </Select>
