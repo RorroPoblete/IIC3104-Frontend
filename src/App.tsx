@@ -9,6 +9,7 @@ import CodificationPage from './pages/Codification'
 import NormsPage from './pages/NormsPage'
 import PricingPage from './pages/PricingPage'
 import AjustesPage from './pages/AjustesPage'
+import AuditPage from './pages/AuditPage'
 
 const RequireAdmin: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
@@ -30,6 +31,14 @@ function App() {
           element={
             <RequireAdmin>
               <AdminPage />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="/auditoria"
+          element={
+            <RequireAdmin>
+              <AuditPage />
             </RequireAdmin>
           }
         />

@@ -34,6 +34,7 @@ import { useAuth } from '../components/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import UCHeader from '../components/UCHeader'
 import UCBreadcrumb from '../components/UCBreadcrumb'
+import { authFetch } from '../utils/authFetch'
 import type { UploadProps, TableColumnsType } from 'antd'
 
 const API_BASE_URL = (import.meta.env.VITE_BACKEND_BASE_URL ?? 'http://localhost:3000').replace(/\/+$/, '')
@@ -94,7 +95,7 @@ interface NormRow {
 }
 
 const NormsPage: React.FC = () => {
-  const { user, logout } = useAuth()
+  const { user, logout, getAccessTokenSilently } = useAuth()
   const navigate = useNavigate()
   const [normFiles, setNormFiles] = useState<NormFile[]>([])
   const [loading, setLoading] = useState(false)
@@ -106,6 +107,12 @@ const NormsPage: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [activeNormFileId, setActiveNormFileId] = useState<string>('')
+
+  const buildUserHeaders = () => ({
+    ...(user?.email ? { 'x-user-email': user.email } : {}),
+    ...(user?.sub ? { 'x-user-id': user.sub } : {}),
+    ...(user?.name ? { 'x-user-name': user.name } : {}),
+  })
 
   const handleLogout = () => {
     logout()
@@ -123,7 +130,11 @@ const NormsPage: React.FC = () => {
   const fetchNormFiles = async () => {
     setLoading(true)
     try {
-      const response = await fetch(buildNormsUrl('/import/batches'))
+      const response = await authFetch(
+        buildNormsUrl('/import/batches'),
+        { headers: buildUserHeaders() },
+        getAccessTokenSilently
+      )
       const result = await response.json()
       if (result.success) {
         setNormFiles(result.data.files)
@@ -144,7 +155,11 @@ const NormsPage: React.FC = () => {
 
   const fetchNormRows = async (normFileId: string) => {
     try {
-      const response = await fetch(buildNormsUrl(`/import/batches/${normFileId}/data`))
+      const response = await authFetch(
+        buildNormsUrl(`/import/batches/${normFileId}/data`),
+        { headers: buildUserHeaders() },
+        getAccessTokenSilently
+      )
       const result = await response.json()
 
       if (result.success && result.data && result.data.data) {
@@ -168,12 +183,14 @@ const NormsPage: React.FC = () => {
 
   const setActiveNormFile = async (normFileId: string) => {
     try {
-      const response = await fetch(buildNormsUrl(`/import/batches/${normFileId}/activate`), {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await authFetch(
+        buildNormsUrl(`/import/batches/${normFileId}/activate`),
+        {
+          method: 'PATCH',
+          headers: buildUserHeaders(),
         },
-      })
+        getAccessTokenSilently
+      )
       const result = await response.json()
       
       if (result.success) {
@@ -223,10 +240,15 @@ const NormsPage: React.FC = () => {
       formData.append('file', selectedFile)
       formData.append('description', `Norma Minsal - ${new Date().toLocaleDateString()}`)
 
-      const response = await fetch(buildNormsUrl('/import/csv'), {
-        method: 'POST',
-        body: formData,
-      })
+      const response = await authFetch(
+        buildNormsUrl('/import/csv'),
+        {
+          method: 'POST',
+          body: formData,
+          headers: buildUserHeaders(),
+        },
+        getAccessTokenSilently
+      )
 
       const result = await response.json()
       
