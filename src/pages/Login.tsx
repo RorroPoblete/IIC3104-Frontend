@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Form, Button, Card, Typography, Alert } from 'antd'
-import { MedicineBoxOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, MedicineBoxOutlined } from '@ant-design/icons'
+import type { RedirectLoginOptions } from '@auth0/auth0-spa-js'
 import { useAuth } from '../components/AuthContext'
 import { useLocation, useNavigate } from 'react-router-dom'
 
@@ -22,11 +23,22 @@ const LoginPage: React.FC = () => {
     }
   }, [isAuthorized, loading, navigate, returnTo])
 
-  const handleLogin = async () => {
+  const handleLogin = async (forcePrompt = false) => {
     clearAuthError()
     setSubmitting(true)
     try {
-      await loginWithRedirect({ appState: { returnTo } })
+      const redirectOptions: RedirectLoginOptions = {
+        appState: { returnTo }
+      }
+
+      if (forcePrompt) {
+        redirectOptions.authorizationParams = {
+          ...redirectOptions.authorizationParams,
+          prompt: 'login'
+        }
+      }
+
+      await loginWithRedirect(redirectOptions)
     } finally {
       setSubmitting(false)
     }
@@ -60,10 +72,21 @@ const LoginPage: React.FC = () => {
                 style={{ marginBottom: '1rem' }}
               />
             )}
+            {authError && (
+              <Form.Item style={{ marginBottom: '1rem' }}>
+                <Button
+                  icon={<ArrowLeftOutlined />}
+                  block
+                  onClick={() => handleLogin(true)}
+                >
+                  Volver e intentar con otra cuenta
+                </Button>
+              </Form.Item>
+            )}
             <Form.Item style={{ marginBottom: '1rem' }}>
               <Button
                 type="primary"
-                onClick={handleLogin}
+                onClick={() => handleLogin()}
                 loading={submitting}
                 className="btn-primary"
                 style={{
