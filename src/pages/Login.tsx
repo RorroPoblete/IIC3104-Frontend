@@ -59,7 +59,7 @@ const LoginPage: React.FC = () => {
             <h1 className="uc-form-title">UC CHRISTUS</h1>
             <p className="uc-form-subtitle">Sistema Unificado GRD-FONASA</p>
             <Typography.Text type="secondary">
-              Ingreso Administrador
+              Inicio de Sesión
             </Typography.Text>
           </div>
 

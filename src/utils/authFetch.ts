@@ -11,7 +11,10 @@ export async function authFetch(
   }
 
   const token = await getAccessTokenSilently({
-    authorizationParams: { audience },
+    authorizationParams: { 
+      audience,
+      scope: 'openid profile email',
+    },
   })
   const headers = new Headers(init.headers || {})
   headers.set('Authorization', `Bearer ${token}`)

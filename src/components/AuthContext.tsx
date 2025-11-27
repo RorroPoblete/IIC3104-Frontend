@@ -80,14 +80,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const res = await authFetch(apiUrl('/api/users/me'), { method: 'GET' }, getAccessTokenSilently)
       if (!res.ok) {
-        if (res.status === 401 || res.status === 403) {
-          const message = 'Tu cuenta no está autorizada para acceder al sistema'
+        if (res.status === 401) {
+          const message = 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.'
           setAuthError(message)
           persistAuthError(message)
           logout({ logoutParams: { returnTo: window.location.origin } })
           return
         }
-        throw new Error('No se pudo validar tu usuario')
+        if (res.status === 403) {
+          const message = 'Tu cuenta no está registrada en el sistema. Contacta a un administrador para obtener acceso.'
+          setAuthError(message)
+          persistAuthError(message)
+          logout({ logoutParams: { returnTo: window.location.origin } })
+          return
+        }
+        const errorData = await res.json().catch(() => ({}))
+        const errorMessage = errorData.message || 'No se pudo validar tu usuario'
+        throw new Error(errorMessage)
       }
 
       const data: AppUser = await res.json()
@@ -95,7 +104,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       clearAuthError()
     } catch (err) {
       console.error('Error cargando el usuario de la aplicación', err)
-      const message = 'No se pudo validar tu sesión. Intenta nuevamente.'
+      const message = err instanceof Error && err.message !== 'No se pudo validar tu usuario'
+        ? err.message
+        : 'No se pudo validar tu sesión. Verifica tu conexión e intenta nuevamente.'
       setAuthError(message)
       persistAuthError(message)
     } finally {
