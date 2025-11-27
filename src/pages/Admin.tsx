@@ -47,6 +47,10 @@ const AdminPage: React.FC = () => {
     navigate('/auditoria')
   }
 
+  const handleNavigateToReports = () => {
+    navigate('/reportes')
+  }
+
   return (
     <div className="admin-page">
       <UCHeader 
@@ -246,7 +250,12 @@ const AdminPage: React.FC = () => {
           </Col>
           
           <Col xs={24} sm={12} lg={6}>
-            <Card className="uc-card" hoverable style={{ cursor: 'pointer', height: '100%' }}>
+            <Card 
+              className="uc-card" 
+              hoverable
+              onClick={handleNavigateToReports}
+              style={{ cursor: 'pointer', height: '100%' }}
+            >
               <div style={{ textAlign: 'center' }}>
                 <BarChartOutlined 
                   style={{ 
@@ -259,10 +268,10 @@ const AdminPage: React.FC = () => {
                   Reportes y Análisis
                 </Typography.Title>
                 <Typography.Paragraph style={{ color: 'var(--uc-gray-600)', marginBottom: '1rem' }}>
-                  Generar reportes y análisis de datos de codificación (Próximamente)
+                  Visualiza estadísticas, gráficos y análisis de datos del sistema
                 </Typography.Paragraph>
-                <Button disabled icon={<BarChartOutlined />} size="large">
-                  Próximamente
+                <Button type="primary" icon={<BarChartOutlined />} size="large">
+                  Ver reportes
                 </Button>
               </div>
             </Card>
@@ -292,49 +301,7 @@ const AdminPage: React.FC = () => {
           </Col>
         </Row>
 
-        {/* Statistics Cards */}
-        <Row gutter={[16, 16]}>
-          <Col xs={24} sm={12} lg={6}>
-            <Card className="uc-card">
-              <Statistic
-                title="Episodios Procesados"
-                value={0}
-                prefix={<DatabaseOutlined />}
-                valueStyle={{ color: 'var(--uc-primary-blue)' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card className="uc-card">
-              <Statistic
-                title="Archivos Importados"
-                value={0}
-                prefix={<FileTextOutlined />}
-                valueStyle={{ color: 'var(--uc-success)' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card className="uc-card">
-              <Statistic
-                title="Usuarios Activos"
-                value={1}
-                prefix={<TeamOutlined />}
-                valueStyle={{ color: 'var(--uc-warning)' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card className="uc-card">
-              <Statistic
-                title="Sistema"
-                value="Operativo"
-                prefix={<MedicineBoxOutlined />}
-                valueStyle={{ color: 'var(--uc-success)' }}
-              />
-            </Card>
-          </Col>
-        </Row>
+        {/* Tarjetas de estadísticas eliminadas a petición del usuario */}
       </div>
     </div>
   )

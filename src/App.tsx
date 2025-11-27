@@ -10,6 +10,7 @@ import NormsPage from './pages/NormsPage'
 import PricingPage from './pages/PricingPage'
 import AjustesPage from './pages/AjustesPage'
 import AuditPage from './pages/AuditPage'
+import ReportsPage from './pages/ReportsPage'
 
 const RequireAdmin: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
@@ -71,6 +72,14 @@ function App() {
           element={
             <RequireAdmin>
               <AjustesPage />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="/reportes"
+          element={
+            <RequireAdmin>
+              <ReportsPage />
             </RequireAdmin>
           }
         />
