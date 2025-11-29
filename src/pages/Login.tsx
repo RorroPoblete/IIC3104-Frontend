@@ -6,22 +6,47 @@ import { useAuth } from '../components/AuthContext'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 const LoginPage: React.FC = () => {
-  const { loginWithRedirect, isAuthorized, loading, authError, clearAuthError } = useAuth()
+  const { loginWithRedirect, isAuthorized, loading, authError, clearAuthError, appUser } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [submitting, setSubmitting] = useState(false)
   const [form] = Form.useForm()
 
+  const getDefaultRoute = (role?: string) => {
+    if (role === 'Administrador') {
+      return '/admin'
+    }
+    // Para Analista, Codificador, Finanzas u otros roles, redirigir a codification
+    return '/codification'
+  }
+
   const returnTo = useMemo(() => {
     const state = location.state as { from?: { pathname?: string } } | undefined
-    return state?.from?.pathname || '/admin'
-  }, [location.state])
+    if (state?.from?.pathname) {
+      return state.from.pathname
+    }
+    // Si tenemos el usuario, usar su rol para determinar la ruta por defecto
+    if (appUser?.role) {
+      return getDefaultRoute(appUser.role)
+    }
+    // Por defecto, ir a codification (más seguro que /admin)
+    return '/codification'
+  }, [location.state, appUser?.role])
 
   useEffect(() => {
-    if (!loading && isAuthorized) {
-      navigate(returnTo, { replace: true })
+    if (!loading && isAuthorized && appUser) {
+      // Verificar que la ruta de destino sea accesible para el rol del usuario
+      const targetRoute = returnTo
+      const isAdminRoute = targetRoute.startsWith('/admin')
+      
+      if (isAdminRoute && appUser.role !== 'Administrador') {
+        // Si intenta ir a una ruta de admin pero no es administrador, redirigir a su ruta por defecto
+        navigate(getDefaultRoute(appUser.role), { replace: true })
+      } else {
+        navigate(targetRoute, { replace: true })
+      }
     }
-  }, [isAuthorized, loading, navigate, returnTo])
+  }, [isAuthorized, loading, navigate, returnTo, appUser])
 
   const handleLogin = async (forcePrompt = false) => {
     clearAuthError()

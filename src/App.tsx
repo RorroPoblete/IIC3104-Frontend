@@ -23,7 +23,16 @@ const RequireAuth: React.FC<{ children: React.ReactElement; allowedRoles?: strin
   }
 
   if (allowedRoles && appUser && !allowedRoles.includes(appUser.role)) {
-    return <Navigate to="/login" state={{ from: location }} replace />
+    // Redirigir a una ruta apropiada según el rol del usuario en lugar de volver a login
+    const getDefaultRoute = (role?: string) => {
+      if (role === 'Administrador') {
+        return '/admin'
+      }
+      // Para Analista, Codificador, Finanzas u otros roles, redirigir a codification
+      return '/codification'
+    }
+    const defaultRoute = getDefaultRoute(appUser.role)
+    return <Navigate to={defaultRoute} replace />
   }
 
   return children

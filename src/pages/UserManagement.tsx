@@ -37,13 +37,15 @@ const UserManagementPage: React.FC = () => {
   const roleColors: Record<string, string> = {
     Administrador: 'geekblue',
     Analista: 'green',
-    Codificador: 'purple'
+    Codificador: 'purple',
+    Finanzas: 'orange'
   }
 
   const roleOptions = [
     { label: 'Administrador', value: 'Administrador' },
     { label: 'Analista', value: 'Analista' },
-    { label: 'Codificador', value: 'Codificador' }
+    { label: 'Codificador', value: 'Codificador' },
+    { label: 'Finanzas', value: 'Finanzas' }
   ]
 
   const loadUsers = async () => {
