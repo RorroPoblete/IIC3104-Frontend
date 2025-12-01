@@ -453,6 +453,10 @@ const CodificationPage: React.FC = () => {
       return acc
     }, {})
 
+    // Obtener campos editables según el rol del usuario
+    const allowedFields = getEditableFieldsForRole(userRole)
+    const isAdmin = userRole === 'Administrador'
+
     const changes: Array<{ id: string; updates: Record<string, unknown> }> = []
 
     modifiedData.forEach((row) => {
@@ -462,7 +466,10 @@ const CodificationPage: React.FC = () => {
       const updates: Record<string, unknown> = {}
 
       Object.keys(row).forEach((field) => {
+        // Filtrar campos no editables y campos no permitidos para el rol
         if (NON_EDITABLE_FIELDS.has(field)) return
+        if (!isAdmin && !allowedFields.includes(field)) return
+        
         const newValue = row[field as keyof NormalizedData]
         const oldValue = original[field as keyof NormalizedData]
         if (newValue !== oldValue) {
@@ -514,6 +521,47 @@ const CodificationPage: React.FC = () => {
       message.error('Error de conexión al guardar los cambios')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleDownloadFromServer = async () => {
+    if (!selectedBatch) {
+      message.error('Selecciona un lote antes de descargar')
+      return
+    }
+
+    try {
+      const token = await getAccessTokenSilently({
+        authorizationParams: { 
+          audience: window.__APP_CONFIG__?.auth0Audience,
+          scope: 'openid profile email',
+        },
+      })
+      
+      const url = buildCodificationUrl(`/batches/${selectedBatch.id}/normalized/export`)
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error('Error al descargar el archivo')
+      }
+
+      const blob = await response.blob()
+      const downloadUrl = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = downloadUrl
+      link.setAttribute('download', `lote-${selectedBatch.filename || selectedBatch.id}-${Date.now()}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(downloadUrl)
+      message.success('Archivo descargado exitosamente')
+    } catch (error) {
+      console.error('Error descargando archivo:', error)
+      message.error('Error al descargar el archivo')
     }
   }
 
@@ -1610,10 +1658,11 @@ const CodificationPage: React.FC = () => {
         </div>
 
         <Tabs 
-          defaultActiveKey="upload" 
+          defaultActiveKey={canUpload ? "upload" : "batches"} 
           size="large"
           items={[
-            {
+            // Tab de upload solo para Codificador y Administrador
+            ...(canUpload ? [{
               key: 'upload',
               label: 'Subir Archivo',
               children: (
@@ -1688,7 +1737,7 @@ const CodificationPage: React.FC = () => {
                   </div>
                 </Card>
               )
-            },
+            }] : []),
             {
               key: 'batches',
               label: 'Lotes de Importación',
@@ -1847,7 +1896,15 @@ const CodificationPage: React.FC = () => {
               icon={<DownloadOutlined />}
               onClick={handleExportModified}
             >
-              Exportar CSV
+              Exportar CSV (Local)
+            </Button>,
+            <Button 
+              key="download" 
+              type="default"
+              icon={<DownloadOutlined />}
+              onClick={handleDownloadFromServer}
+            >
+              Descargar desde Servidor
             </Button>
           ]}
           width={isFullscreen ? '95vw' : 1200}

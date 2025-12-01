@@ -58,9 +58,9 @@ function App() {
         <Route
           path="/auditoria"
           element={
-            <RequireAdmin>
+            <RequireAuth allowedRoles={['Administrador']}>
               <AuditPage />
-            </RequireAdmin>
+            </RequireAuth>
           }
         />
         <Route
@@ -90,25 +90,25 @@ function App() {
         <Route
           path="/pricing"
           element={
-            <RequireAdmin>
+            <RequireAuth allowedRoles={['Administrador']}>
               <PricingPage />
-            </RequireAdmin>
+            </RequireAuth>
           }
         />
         <Route
           path="/ajustes"
           element={
-            <RequireAdmin>
+            <RequireAuth allowedRoles={['Administrador']}>
               <AjustesPage />
-            </RequireAdmin>
+            </RequireAuth>
           }
         />
         <Route
           path="/reportes"
           element={
-            <RequireAdmin>
+            <RequireAuth allowedRoles={['Administrador']}>
               <ReportsPage />
-            </RequireAdmin>
+            </RequireAuth>
           }
         />
         <Route path="/login/callback" element={<LoginCallback />} />
