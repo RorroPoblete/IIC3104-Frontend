@@ -42,6 +42,7 @@ import { useAuth } from '../components/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import UCHeader from '../components/UCHeader'
 import UCBreadcrumb from '../components/UCBreadcrumb'
+import { authFetch } from '../utils/authFetch'
 import type { UploadProps, TableColumnsType} from 'antd'
 import type { ColumnType } from 'antd/es/table'
 
@@ -97,6 +98,12 @@ interface NormalizedData {
   anio?: number
   mes?: number
   diagnosticoPrincipal?: string
+  proced01Principal?: string
+  conjuntoProcedimientosSecundarios?: string
+  // Campos de Finanzas
+  validacion?: string
+  estadoRN?: string
+  diasDemora?: number
   createdAt: string
   updatedAt: string
   [key: string]: unknown
@@ -199,9 +206,59 @@ const sanitizeNumericFields = (row: Record<string, unknown>) => {
   return sanitized as NormalizedData
 }
 
+// Campos editables por rol
+const CODIFICADOR_EDITABLE_FIELDS = [
+  'proced01Principal',
+  'conjuntoProcedimientosSecundarios',
+  'diagnosticoPrincipal',
+  'conjuntoDx',
+  'especialidadMedica',
+  'medicoEgreso',
+  'especialidadEgreso',
+  'servicioIngresoDesc',
+  'servicioEgresoDesc',
+  'motivoEgreso',
+  'fechaIngresoCompleta',
+  'fechaCompleta',
+  'estanciaEpisodio',
+  'estanciaRealEpisodio',
+  'horasEstancia',
+  'facturacionTotal',
+  'emNorma',
+  'estanciasNorma',
+  'casosNorma',
+]
+
+const FINANZAS_EDITABLE_FIELDS = [
+  'validacion',
+  'estadoRN',
+  'diasDemora',
+]
+
+const getEditableFieldsForRole = (role?: string): string[] => {
+  if (role === 'Administrador') {
+    return [...CODIFICADOR_EDITABLE_FIELDS, ...FINANZAS_EDITABLE_FIELDS]
+  }
+  if (role === 'Codificador') {
+    return CODIFICADOR_EDITABLE_FIELDS
+  }
+  if (role === 'Finanzas') {
+    return FINANZAS_EDITABLE_FIELDS
+  }
+  return []
+}
+
+const canUploadFiles = (role?: string): boolean => {
+  return role === 'Administrador' || role === 'Codificador'
+}
+
 const CodificationPage: React.FC = () => {
-  const { user, logout } = useAuth()
+  const { user, appUser, logout, getAccessTokenSilently } = useAuth()
   const navigate = useNavigate()
+  const userEmail = appUser?.email ?? user?.email
+  const userRole = appUser?.role
+  const editableFields = getEditableFieldsForRole(userRole)
+  const canUpload = canUploadFiles(userRole)
   const [batches, setBatches] = useState<ImportBatch[]>([])
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -294,33 +351,67 @@ const CodificationPage: React.FC = () => {
         return
       }
 
-      // Actualizar los datos modificados con los valores de edición
-      setModifiedData(prev => 
-        prev.map(item => {
-          if (!item || item.id !== key) {
-            return item
-          }
+      // Filtrar solo los campos editables según el rol
+      const normalizedValues = Object.entries(editingRow).reduce<Record<string, unknown>>((acc, [field, value]) => {
+        if (editableFields.includes(field)) {
+          acc[field] = normalizeFieldValue(field, value)
+        }
+        return acc
+      }, {})
 
-          const normalizedValues = Object.entries(editingRow).reduce<Record<string, unknown>>((acc, [field, value]) => {
-            acc[field] = normalizeFieldValue(field, value)
-            return acc
-          }, {})
+      // Si no hay campos editables, no hacer nada
+      if (Object.keys(normalizedValues).length === 0) {
+        message.warning('No tienes permisos para editar estos campos')
+        return
+      }
 
-          return { ...item, ...normalizedValues }
+      // Enviar cambios al backend
+      const record = modifiedData.find(item => item.id === key)
+      if (!record) {
+        message.error('Registro no encontrado')
+        return
+      }
+
+      try {
+        const response = await authFetch(
+          buildCodificationUrl(`/batches/${record.batchId}/normalized/${key}`),
+          {
+            method: 'PUT',
+            body: JSON.stringify(normalizedValues),
+          },
+          getAccessTokenSilently
+        )
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.message || 'Error al guardar los cambios')
+        }
+
+        // Actualizar los datos localmente
+        setModifiedData(prev => 
+          prev.map(item => {
+            if (!item || item.id !== key) {
+              return item
+            }
+            return { ...item, ...normalizedValues }
+          })
+        )
+        
+        setEditingKey('')
+        setHasUnsavedChanges(true)
+        
+        // Limpiar valores de edición
+        setEditingValues(prev => {
+          const newValues = { ...prev }
+          delete newValues[key]
+          return newValues
         })
-      )
-      
-      setEditingKey('')
-      setHasUnsavedChanges(true)
-      
-      // Limpiar valores de edición
-      setEditingValues(prev => {
-        const newValues = { ...prev }
-        delete newValues[key]
-        return newValues
-      })
-      
-      message.success('Cambios guardados localmente')
+        
+        message.success('Cambios guardados exitosamente')
+      } catch (error) {
+        console.error('Error guardando en backend:', error)
+        message.error(error instanceof Error ? error.message : 'Error al guardar los cambios')
+      }
     } catch (errInfo) {
       console.error('Error en save:', errInfo)
       message.error('Error al guardar los cambios')
@@ -399,7 +490,7 @@ const CodificationPage: React.FC = () => {
   const fetchBatches = async () => {
     setLoading(true)
     try {
-      const response = await fetch(buildCodificationUrl('/batches'))
+      const response = await authFetch(buildCodificationUrl('/batches'), { method: 'GET' }, getAccessTokenSilently)
       const result = await response.json()
       if (result.success) {
         setBatches(result.data.batches)
@@ -415,7 +506,7 @@ const CodificationPage: React.FC = () => {
 
   const fetchNormalizedData = async (batchId: string) => {
     try {
-      const response = await fetch(buildCodificationUrl(`/batches/${batchId}/normalized`))
+      const response = await authFetch(buildCodificationUrl(`/batches/${batchId}/normalized`), { method: 'GET' }, getAccessTokenSilently)
       const result = await response.json()
 
       if (result.success && result.data && result.data.normalizedData) {
@@ -477,10 +568,10 @@ const CodificationPage: React.FC = () => {
       const formData = new FormData()
       formData.append('file', selectedFile)
 
-      const response = await fetch(buildCodificationUrl('/csv'), {
+      const response = await authFetch(buildCodificationUrl('/csv'), {
         method: 'POST',
         body: formData,
-      })
+      }, getAccessTokenSilently)
 
       const result = await response.json()
       
@@ -1217,29 +1308,66 @@ const CodificationPage: React.FC = () => {
         ) : (
           <Button
             type="link"
-            disabled={editingKey !== ''}
+            disabled={editingKey !== '' || editableFields.length === 0}
             onClick={() => edit(record)}
             icon={<EditOutlined />}
             size="small"
+            title={editableFields.length === 0 ? 'No tienes permisos para editar campos' : 'Editar'}
           >
             Editar
           </Button>
         )
       },
     },
+    // Campos de Finanzas
+    {
+      title: 'Validación',
+      dataIndex: 'validacion',
+      key: 'validacion',
+      width: 120,
+      editable: editableFields.includes('validacion'),
+    },
+    {
+      title: 'Estado RN',
+      dataIndex: 'estadoRN',
+      key: 'estadoRN',
+      width: 120,
+      editable: editableFields.includes('estadoRN'),
+    },
+    {
+      title: 'Días de Demora/Espera',
+      dataIndex: 'diasDemora',
+      key: 'diasDemora',
+      width: 150,
+      editable: editableFields.includes('diasDemora'),
+      render: (value: number) => value ?? '-',
+    },
   ]
+
+  // Aplicar permisos de edición a las columnas según el rol
+  const dataColumnsWithPermissions = React.useMemo(() => {
+    return dataColumns.map((col: any) => {
+      const fieldName = col.dataIndex as string
+      const isEditableByRole = editableFields.includes(fieldName)
+      
+      return {
+        ...col,
+        editable: col.editable && isEditableByRole,
+      }
+    })
+  }, [dataColumns, editableFields])
 
   // Inicializar columnas visibles
   useEffect(() => {
     const initialColumns: Record<string, boolean> = {}
-    dataColumns.forEach(col => {
+    dataColumnsWithPermissions.forEach(col => {
       initialColumns[col.key as string] = true
     })
     setVisibleColumns(initialColumns)
-  }, [])
+  }, [dataColumnsWithPermissions])
 
   // Filtrar columnas basado en búsqueda y selección
-  const filteredColumns = dataColumns.filter(col => {
+  const filteredColumns = dataColumnsWithPermissions.filter(col => {
     const isVisible = visibleColumns[col.key as string] !== false
     const matchesSearch = columnSearch === '' || 
       (col.title as string).toLowerCase().includes(columnSearch.toLowerCase())
@@ -1248,7 +1376,10 @@ const CodificationPage: React.FC = () => {
 
   // Aplicar componentes editables a las columnas
   const mergedColumns = filteredColumns.map((col: any) => {
-    if (!col.editable) {
+    // Verificar si el campo es editable según el rol del usuario
+    const isFieldEditable = col.editable && editableFields.includes(col.dataIndex as string)
+    
+    if (!isFieldEditable) {
       return col
     }
 
@@ -1270,7 +1401,7 @@ const CodificationPage: React.FC = () => {
         showNavigation={false}
         showUserActions={true}
         onLogout={handleLogout}
-        userName={user?.email}
+        userName={userEmail}
       />
       
       <div className="admin-content">
@@ -1350,11 +1481,21 @@ const CodificationPage: React.FC = () => {
                         icon={<UploadOutlined />}
                         onClick={handleUpload}
                         loading={uploading}
-                        disabled={!selectedFile}
+                        disabled={!selectedFile || !canUpload}
                         style={{ minWidth: '200px' }}
+                        title={!canUpload ? 'Solo Codificadores y Administradores pueden cargar archivos GRD' : undefined}
                       >
                         {uploading ? 'Subiendo...' : 'Subir Archivo'}
                       </Button>
+                      {!canUpload && (
+                        <Alert
+                          message="Sin permisos para cargar"
+                          description="Solo los usuarios Codificador y Administrador pueden cargar archivos GRD."
+                          type="warning"
+                          showIcon
+                          style={{ marginTop: '0.5rem' }}
+                        />
+                      )}
                     </div>
                     
                     {uploading && (

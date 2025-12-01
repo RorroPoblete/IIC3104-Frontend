@@ -91,9 +91,11 @@ function Auth0ProviderWithNavigate({ config, children }: Auth0ProviderWithNaviga
       authorizationParams={{
         redirect_uri: redirectUri,
         audience: config.audience,
+        scope: 'openid profile email',
       }}
       onRedirectCallback={(appState) => {
-        const target = appState?.returnTo ?? '/admin'
+        // La redirección se manejará en LoginPage después de cargar el usuario
+        const target = appState?.returnTo ?? '/codification'
         navigate(target, { replace: true })
       }}
     >

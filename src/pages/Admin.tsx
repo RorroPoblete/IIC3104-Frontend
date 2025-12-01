@@ -16,8 +16,9 @@ import UCHeader from '../components/UCHeader'
 import UCBreadcrumb from '../components/UCBreadcrumb'
 
 const AdminPage: React.FC = () => {
-  const { user, logout } = useAuth()
+  const { user, appUser, logout } = useAuth()
   const navigate = useNavigate()
+  const userEmail = appUser?.email ?? user?.email
 
   const handleLogout = () => {
     logout()
@@ -32,6 +33,10 @@ const AdminPage: React.FC = () => {
     navigate('/norms')
   }
 
+  const handleNavigateToUsers = () => {
+    navigate('/admin/users')
+  }
+
   return (
     <div className="admin-page">
       <UCHeader 
@@ -39,7 +44,7 @@ const AdminPage: React.FC = () => {
         showUserActions={true}
         showCodificationButton={false}
         onLogout={handleLogout}
-        userName={user?.email}
+        userName={userEmail}
       />
       
       <div className="admin-content">
@@ -83,7 +88,7 @@ const AdminPage: React.FC = () => {
                 Has ingresado exitosamente al sistema. Desde aquí puedes acceder a todas las funcionalidades del sistema.
               </Typography.Paragraph>
               <Typography.Text strong>Sesión iniciada como: </Typography.Text>
-              <Typography.Text type="secondary">{user?.email}</Typography.Text>
+              <Typography.Text type="secondary">{userEmail}</Typography.Text>
             </Col>
           </Row>
         </Card>
@@ -216,7 +221,7 @@ const AdminPage: React.FC = () => {
             </Card>
           </Col>
           <Col xs={24} sm={12} lg={6}>
-            <Card className="uc-card">
+            <Card className="uc-card" hoverable onClick={handleNavigateToUsers} style={{ cursor: 'pointer' }}>
               <Statistic
                 title="Usuarios Activos"
                 value={1}
@@ -242,4 +247,3 @@ const AdminPage: React.FC = () => {
 }
 
 export default AdminPage
-
