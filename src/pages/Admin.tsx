@@ -8,7 +8,10 @@ import {
   SettingOutlined,
   TeamOutlined,
   MedicineBoxOutlined,
-  BookOutlined
+  BookOutlined,
+  DollarOutlined,
+  ToolOutlined,
+  AuditOutlined
 } from '@ant-design/icons'
 import { useAuth } from '../components/AuthContext'
 import { useNavigate } from 'react-router-dom'
@@ -35,6 +38,21 @@ const AdminPage: React.FC = () => {
 
   const handleNavigateToUsers = () => {
     navigate('/admin/users')
+  }
+  const handleNavigateToPricing = () => {
+    navigate('/pricing')
+  }
+
+  const handleNavigateToAjustes = () => {
+    navigate('/ajustes')
+  }
+
+  const handleNavigateToAudit = () => {
+    navigate('/auditoria')
+  }
+
+  const handleNavigateToReports = () => {
+    navigate('/reportes')
   }
 
   return (
@@ -152,7 +170,106 @@ const AdminPage: React.FC = () => {
           </Col>
           
           <Col xs={24} sm={12} lg={6}>
-            <Card className="uc-card" hoverable style={{ cursor: 'pointer', height: '100%' }}>
+            <Card 
+              className="uc-card" 
+              hoverable
+              onClick={handleNavigateToPricing}
+              style={{ cursor: 'pointer', height: '100%' }}
+            >
+              <div style={{ textAlign: 'center' }}>
+                <DollarOutlined 
+                  style={{ 
+                    fontSize: '2.5rem', 
+                    color: 'var(--uc-primary-blue)',
+                    marginBottom: '1rem'
+                  }} 
+                />
+                <Typography.Title level={4} style={{ color: 'var(--uc-gray-900)', marginBottom: '0.5rem' }}>
+                  Gestión de Precios
+                </Typography.Title>
+                <Typography.Paragraph style={{ color: 'var(--uc-gray-600)', marginBottom: '1rem' }}>
+                  Administrar archivos de tarifas para cálculo de precios base GRD
+                </Typography.Paragraph>
+                <Button type="primary" icon={<DollarOutlined />} size="large">
+                  Acceder
+                </Button>
+              </div>
+            </Card>
+          </Col>
+          
+          <Col xs={24} sm={12} lg={6}>
+            <Card 
+              className="uc-card" 
+              hoverable
+              onClick={handleNavigateToAjustes}
+              style={{ cursor: 'pointer', height: '100%' }}
+            >
+              <div style={{ textAlign: 'center' }}>
+                <ToolOutlined 
+                  style={{ 
+                    fontSize: '2.5rem', 
+                    color: 'var(--uc-primary-blue)',
+                    marginBottom: '1rem'
+                  }} 
+                />
+                <Typography.Title level={4} style={{ color: 'var(--uc-gray-900)', marginBottom: '0.5rem' }}>
+                  Ajustes por Tecnología
+                </Typography.Title>
+                <Typography.Paragraph style={{ color: 'var(--uc-gray-600)', marginBottom: '1rem' }}>
+                  Administrar archivos Excel de ajustes por tecnología para cálculos GRD
+                </Typography.Paragraph>
+                <Button type="primary" icon={<ToolOutlined />} size="large">
+                  Acceder
+                </Button>
+              </div>
+            </Card>
+          </Col>
+
+          <Col xs={24} sm={12} lg={6}>
+            <Card 
+              className="uc-card" 
+              hoverable
+              onClick={handleNavigateToAudit}
+              style={{ cursor: 'pointer', height: '100%' }}
+            >
+              <div style={{ textAlign: 'center' }}>
+                <AuditOutlined 
+                  style={{ 
+                    fontSize: '2.5rem', 
+                    color: 'var(--uc-primary-blue)',
+                    marginBottom: '1rem'
+                  }} 
+                />
+                <Typography.Title level={4} style={{ color: 'var(--uc-gray-900)', marginBottom: '0.5rem' }}>
+                  Auditoría de Cambios
+                </Typography.Title>
+                <Typography.Paragraph style={{ color: 'var(--uc-gray-600)', marginBottom: '1rem' }}>
+                  Revisa quién modificó, qué campo cambió y los valores antes/después.
+                </Typography.Paragraph>
+                <Button type="primary" icon={<AuditOutlined />} size="large">
+                  Ver auditoría
+                </Button>
+              </div>
+            </Card>
+          </Col>
+          
+          <Col xs={24} sm={12} lg={6}>
+            <Card className="uc-card" hoverable onClick={handleNavigateToUsers} style={{ cursor: 'pointer' }}>
+              <Statistic
+                title="Usuarios Activos"
+                value={1}
+                prefix={<TeamOutlined />}
+                valueStyle={{ color: 'var(--uc-warning)' }}
+              />
+              
+              </Card>
+          </Col>
+            <Card 
+              className="uc-card" 
+              hoverable
+              onClick={handleNavigateToReports}
+              style={{ cursor: 'pointer', height: '100%' }}
+            >
               <div style={{ textAlign: 'center' }}>
                 <BarChartOutlined 
                   style={{ 
@@ -165,10 +282,10 @@ const AdminPage: React.FC = () => {
                   Reportes y Análisis
                 </Typography.Title>
                 <Typography.Paragraph style={{ color: 'var(--uc-gray-600)', marginBottom: '1rem' }}>
-                  Generar reportes y análisis de datos de codificación (Próximamente)
+                  Visualiza estadísticas, gráficos y análisis de datos del sistema
                 </Typography.Paragraph>
-                <Button disabled icon={<BarChartOutlined />} size="large">
-                  Próximamente
+                <Button type="primary" icon={<BarChartOutlined />} size="large">
+                  Ver reportes
                 </Button>
               </div>
             </Card>
@@ -198,49 +315,7 @@ const AdminPage: React.FC = () => {
           </Col>
         </Row>
 
-        {/* Statistics Cards */}
-        <Row gutter={[16, 16]}>
-          <Col xs={24} sm={12} lg={6}>
-            <Card className="uc-card">
-              <Statistic
-                title="Episodios Procesados"
-                value={0}
-                prefix={<DatabaseOutlined />}
-                valueStyle={{ color: 'var(--uc-primary-blue)' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card className="uc-card">
-              <Statistic
-                title="Archivos Importados"
-                value={0}
-                prefix={<FileTextOutlined />}
-                valueStyle={{ color: 'var(--uc-success)' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card className="uc-card" hoverable onClick={handleNavigateToUsers} style={{ cursor: 'pointer' }}>
-              <Statistic
-                title="Usuarios Activos"
-                value={1}
-                prefix={<TeamOutlined />}
-                valueStyle={{ color: 'var(--uc-warning)' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card className="uc-card">
-              <Statistic
-                title="Sistema"
-                value="Operativo"
-                prefix={<MedicineBoxOutlined />}
-                valueStyle={{ color: 'var(--uc-success)' }}
-              />
-            </Card>
-          </Col>
-        </Row>
+        {/* Tarjetas de estadísticas eliminadas a petición del usuario */}
       </div>
     </div>
   )

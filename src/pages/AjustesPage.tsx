@@ -34,23 +34,22 @@ import { useAuth } from '../components/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import UCHeader from '../components/UCHeader'
 import UCBreadcrumb from '../components/UCBreadcrumb'
-import { authFetch } from '../utils/authFetch'
 import type { UploadProps, TableColumnsType } from 'antd'
 
 const API_BASE_URL = (import.meta.env.VITE_BACKEND_BASE_URL ?? 'http://localhost:3000').replace(/\/+$/, '')
-const NORMS_API_BASE = `${API_BASE_URL}/api/normaminsal`
+const AJUSTES_API_BASE = `${API_BASE_URL}/api/ajustes`
 
-const buildNormsUrl = (path: string) => {
+const buildAjustesUrl = (path: string) => {
   if (!path.startsWith('/')) {
-    return `${NORMS_API_BASE}/${path}`
+    return `${AJUSTES_API_BASE}/${path}`
   }
-  return `${NORMS_API_BASE}${path}`
+  return `${AJUSTES_API_BASE}${path}`
 }
 
 const { Title, Text } = Typography
 const { Option } = Select
 
-interface NormFile {
+interface AjustesFile {
   id: string
   filename: string
   description?: string
@@ -67,53 +66,30 @@ interface NormFile {
   }
 }
 
-interface NormRow {
+interface AjustesRow {
   id: string
   fileId: string
-  grd: string
-  tipoGrd?: string
-  gravedad?: string
-  totalAltas?: number
-  totalEst?: number
-  estMedia?: number
-  altasDepu?: number
-  totalEstDepu?: number
-  estMediaDepuG?: number
-  numOutInfG?: number
-  nOutliersSup?: number
-  exitus?: number
-  percentil25?: number
-  percentil50?: number
-  percentil75?: number
-  puntoCorteInferior?: number
-  puntoCorteSuperior?: number
-  pesoTotal?: number
-  pesoTotalDepu?: number
+  codigo: string
+  descripcion?: string
+  monto: number
   rawData: Record<string, unknown>
   createdAt: string
   updatedAt: string
 }
 
-const NormsPage: React.FC = () => {
-  const { user, appUser, logout, getAccessTokenSilently } = useAuth()
+const AjustesPage: React.FC = () => {
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const userEmail = appUser?.email ?? user?.email
-  const [normFiles, setNormFiles] = useState<NormFile[]>([])
+  const [ajustesFiles, setAjustesFiles] = useState<AjustesFile[]>([])
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
-  const [selectedNormFile, setSelectedNormFile] = useState<NormFile | null>(null)
-  const [normRows, setNormRows] = useState<NormRow[]>([])
+  const [selectedAjustesFile, setSelectedAjustesFile] = useState<AjustesFile | null>(null)
+  const [ajustesRows, setAjustesRows] = useState<AjustesRow[]>([])
   const [viewModalVisible, setViewModalVisible] = useState(false)
   const [dataModalVisible, setDataModalVisible] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [activeNormFileId, setActiveNormFileId] = useState<string>('')
-
-  const buildUserHeaders = () => ({
-    ...(user?.email ? { 'x-user-email': user.email } : {}),
-    ...(user?.sub ? { 'x-user-id': user.sub } : {}),
-    ...(user?.name ? { 'x-user-name': user.name } : {}),
-  })
+  const [activeAjustesFileId, setActiveAjustesFileId] = useState<string>('')
 
   const handleLogout = () => {
     logout()
@@ -128,39 +104,31 @@ const NormsPage: React.FC = () => {
     setIsFullscreen(!isFullscreen)
   }
 
-  const fetchNormFiles = async () => {
+  const fetchAjustesFiles = async () => {
     setLoading(true)
     try {
-      const response = await authFetch(
-        buildNormsUrl('/import/batches'),
-        { headers: buildUserHeaders() },
-        getAccessTokenSilently
-      )
+      const response = await fetch(buildAjustesUrl('/import/files'))
       const result = await response.json()
       if (result.success) {
-        setNormFiles(result.data.files)
+        setAjustesFiles(result.data.files)
         // Encontrar el archivo activo
-        const activeFile = result.data.files.find((file: NormFile) => file.isActive)
+        const activeFile = result.data.files.find((file: AjustesFile) => file.isActive)
         if (activeFile) {
-          setActiveNormFileId(activeFile.id)
+          setActiveAjustesFileId(activeFile.id)
         }
       } else {
-        message.error('Error al cargar los archivos de normas')
+        message.error('Error al cargar los archivos de ajustes')
       }
     } catch (error) {
-      message.error('Error de conexión al cargar los archivos de normas')
+      message.error('Error de conexión al cargar los archivos de ajustes')
     } finally {
       setLoading(false)
     }
   }
 
-  const fetchNormRows = async (normFileId: string) => {
+  const fetchAjustesRows = async (ajustesFileId: string) => {
     try {
-      const response = await authFetch(
-        buildNormsUrl(`/import/batches/${normFileId}/data`),
-        { headers: buildUserHeaders() },
-        getAccessTokenSilently
-      )
+      const response = await fetch(buildAjustesUrl(`/import/files/${ajustesFileId}/data`))
       const result = await response.json()
 
       if (result.success && result.data && result.data.data) {
@@ -168,56 +136,53 @@ const NormsPage: React.FC = () => {
           ? result.data.data
           : []
         
-        const validRows: NormRow[] = rawData.filter((item): item is NormRow => 
+        const validRows: AjustesRow[] = rawData.filter((item): item is AjustesRow => 
           typeof item === 'object' && item !== null && 'id' in item
-        ) as NormRow[]
+        ) as AjustesRow[]
 
-        setNormRows(validRows)
+        setAjustesRows(validRows)
       } else {
-        message.error('Error al cargar las filas de normas')
+        message.error('Error al cargar las filas de ajustes')
       }
     } catch (error) {
-      console.error('Error en fetchNormRows:', error)
-      message.error('Error de conexión al cargar las normas')
+      console.error('Error en fetchAjustesRows:', error)
+      message.error('Error de conexión al cargar los ajustes')
     }
   }
 
-  const setActiveNormFile = async (normFileId: string) => {
+  const setActiveAjustesFile = async (ajustesFileId: string) => {
     try {
-      const response = await authFetch(
-        buildNormsUrl(`/import/batches/${normFileId}/activate`),
-        {
-          method: 'PATCH',
-          headers: buildUserHeaders(),
+      const response = await fetch(buildAjustesUrl(`/import/files/${ajustesFileId}/activate`), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        getAccessTokenSilently
-      )
+      })
       const result = await response.json()
       
       if (result.success) {
-        setActiveNormFileId(normFileId)
-        message.success('Norma activa actualizada correctamente')
-        fetchNormFiles() // Actualizar la lista
+        setActiveAjustesFileId(ajustesFileId)
+        message.success('Archivo de ajustes activo actualizado correctamente')
+        fetchAjustesFiles() // Actualizar la lista
       } else {
-        message.error(result.message || 'Error al establecer la norma activa')
+        message.error(result.message || 'Error al establecer el archivo de ajustes activo')
       }
     } catch (error) {
-      message.error('Error de conexión al establecer la norma activa')
+      message.error('Error de conexión al establecer el archivo de ajustes activo')
     }
   }
 
   useEffect(() => {
-    fetchNormFiles()
+    fetchAjustesFiles()
   }, [])
 
   const handleFileSelect = (file: File) => {
-    const isCSV = file.type === 'text/csv' || file.name.endsWith('.csv')
     const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || 
                    file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
                    file.type === 'application/vnd.ms-excel'
 
-    if (!isCSV && !isExcel) {
-      message.error('Solo se permiten archivos CSV y Excel (.xlsx, .xls)')
+    if (!isExcel) {
+      message.error('Solo se permiten archivos Excel (.xlsx, .xls)')
       return false
     }
     const isLt5M = file.size / 1024 / 1024 < 5
@@ -239,26 +204,21 @@ const NormsPage: React.FC = () => {
     try {
       const formData = new FormData()
       formData.append('file', selectedFile)
-      formData.append('description', `Norma Minsal - ${new Date().toLocaleDateString()}`)
+      formData.append('description', `Ajustes por Tecnología - ${new Date().toLocaleDateString()}`)
 
-      const response = await authFetch(
-        buildNormsUrl('/import/csv'),
-        {
-          method: 'POST',
-          body: formData,
-          headers: buildUserHeaders(),
-        },
-        getAccessTokenSilently
-      )
+      const response = await fetch(buildAjustesUrl('/import/excel'), {
+        method: 'POST',
+        body: formData,
+      })
 
       const result = await response.json()
       
       if (result.success) {
-        message.success(`Archivo de normas importado: ${result.data.processedRows} filas procesadas`)
+        message.success(`Archivo de ajustes importado: ${result.data.processedRows} filas procesadas`)
         setSelectedFile(null)
-        fetchNormFiles() // Refresh the list
+        fetchAjustesFiles() // Refresh the list
       } else {
-        message.error(result.message || 'Error en la importación del archivo de normas')
+        message.error(result.message || 'Error en la importación del archivo de ajustes')
       }
     } catch (error) {
       message.error('Error de conexión durante la importación')
@@ -269,7 +229,7 @@ const NormsPage: React.FC = () => {
 
   const uploadProps: UploadProps = {
     name: 'file',
-    accept: '.csv,.xlsx,.xls',
+    accept: '.xlsx,.xls',
     beforeUpload: handleFileSelect,
     showUploadList: false,
   }
@@ -291,24 +251,23 @@ const NormsPage: React.FC = () => {
     )
   }
 
-
-  const handleViewNormFile = (normFile: NormFile) => {
-    setSelectedNormFile(normFile)
+  const handleViewAjustesFile = (ajustesFile: AjustesFile) => {
+    setSelectedAjustesFile(ajustesFile)
     setViewModalVisible(true)
   }
 
-  const handleViewNormData = async (normFile: NormFile) => {
-    setSelectedNormFile(normFile)
-    await fetchNormRows(normFile.id)
+  const handleViewAjustesData = async (ajustesFile: AjustesFile) => {
+    setSelectedAjustesFile(ajustesFile)
+    await fetchAjustesRows(ajustesFile.id)
     setDataModalVisible(true)
   }
 
-  const normFilesColumns: TableColumnsType<NormFile> = [
+  const ajustesFilesColumns: TableColumnsType<AjustesFile> = [
     {
       title: 'Archivo',
       dataIndex: 'filename',
       key: 'filename',
-      render: (filename: string, record: NormFile) => (
+      render: (filename: string, record: AjustesFile) => (
         <Space>
           <FileTextOutlined />
           <div>
@@ -316,7 +275,7 @@ const NormsPage: React.FC = () => {
             {record.isActive && (
               <div>
                 <Tag color="gold" icon={<StarFilled />}>
-                  Norma Activa
+                  Archivo Activo
                 </Tag>
               </div>
             )}
@@ -378,14 +337,14 @@ const NormsPage: React.FC = () => {
           <Button 
             type="link" 
             icon={<EyeOutlined />}
-            onClick={() => handleViewNormFile(record)}
+            onClick={() => handleViewAjustesFile(record)}
           >
             Ver
           </Button>
           <Button 
             type="link" 
             icon={<DownloadOutlined />}
-            onClick={() => handleViewNormData(record)}
+            onClick={() => handleViewAjustesData(record)}
             disabled={record.status !== 'COMPLETED' && record.status !== 'PARTIALLY_COMPLETED'}
           >
             Datos
@@ -394,7 +353,7 @@ const NormsPage: React.FC = () => {
             <Button 
               type="link" 
               icon={<StarOutlined />}
-              onClick={() => setActiveNormFile(record.id)}
+              onClick={() => setActiveAjustesFile(record.id)}
               disabled={record.status !== 'COMPLETED' && record.status !== 'PARTIALLY_COMPLETED'}
             >
               Activar
@@ -405,102 +364,26 @@ const NormsPage: React.FC = () => {
     },
   ]
 
-  const normRowsColumns: TableColumnsType<NormRow> = [
+  const ajustesRowsColumns: TableColumnsType<AjustesRow> = [
     {
-      title: 'GRD',
-      dataIndex: 'grd',
-      key: 'grd',
-      width: 100,
+      title: 'Código',
+      dataIndex: 'codigo',
+      key: 'codigo',
+      width: 200,
       fixed: 'left',
     },
     {
-      title: 'Tipo GRD',
-      dataIndex: 'tipoGrd',
-      key: 'tipoGrd',
-      width: 100,
+      title: 'Descripción',
+      dataIndex: 'descripcion',
+      key: 'descripcion',
+      width: 300,
     },
     {
-      title: 'Gravedad',
-      dataIndex: 'gravedad',
-      key: 'gravedad',
-      width: 80,
-    },
-    {
-      title: 'Total Altas',
-      dataIndex: 'totalAltas',
-      key: 'totalAltas',
-      width: 100,
-      render: (value: number) => value || '-',
-    },
-    {
-      title: 'Total Estancias',
-      dataIndex: 'totalEst',
-      key: 'totalEst',
-      width: 120,
-      render: (value: number) => value || '-',
-    },
-    {
-      title: 'Estancia Media',
-      dataIndex: 'estMedia',
-      key: 'estMedia',
-      width: 120,
-      render: (value: number) => value ? value.toFixed(2) : '-',
-    },
-    {
-      title: 'Altas Depuradas',
-      dataIndex: 'altasDepu',
-      key: 'altasDepu',
-      width: 120,
-      render: (value: number) => value || '-',
-    },
-    {
-      title: 'Peso Total',
-      dataIndex: 'pesoTotal',
-      key: 'pesoTotal',
-      width: 100,
-      render: (value: number) => value ? value.toFixed(2) : '-',
-    },
-    {
-      title: 'Peso Total Depurado',
-      dataIndex: 'pesoTotalDepu',
-      key: 'pesoTotalDepu',
+      title: 'Monto',
+      dataIndex: 'monto',
+      key: 'monto',
       width: 150,
-      render: (value: number) => value ? value.toFixed(2) : '-',
-    },
-    {
-      title: 'Percentil 25',
-      dataIndex: 'percentil25',
-      key: 'percentil25',
-      width: 100,
-      render: (value: number) => value || '-',
-    },
-    {
-      title: 'Percentil 50',
-      dataIndex: 'percentil50',
-      key: 'percentil50',
-      width: 100,
-      render: (value: number) => value || '-',
-    },
-    {
-      title: 'Percentil 75',
-      dataIndex: 'percentil75',
-      key: 'percentil75',
-      width: 100,
-      render: (value: number) => value || '-',
-    },
-    {
-      title: 'Punto Corte Inf.',
-      dataIndex: 'puntoCorteInferior',
-      key: 'puntoCorteInferior',
-      width: 120,
-      render: (value: number) => value || '-',
-    },
-    {
-      title: 'Punto Corte Sup.',
-      dataIndex: 'puntoCorteSuperior',
-      key: 'puntoCorteSuperior',
-      width: 120,
-      render: (value: number) => value || '-',
+      render: (value: number) => `$${Number(value).toLocaleString('es-CL')}`,
     },
   ]
 
@@ -510,7 +393,7 @@ const NormsPage: React.FC = () => {
         showNavigation={false}
         showUserActions={true}
         onLogout={handleLogout}
-        userName={userEmail}
+        userName={user?.email}
       />
       
       <div className="admin-content">
@@ -533,38 +416,38 @@ const NormsPage: React.FC = () => {
             </Button>
           </div>
           <Title level={2} style={{ color: 'var(--uc-gray-900)', marginBottom: '0.5rem' }}>
-            Gestión de Norma Minsal
+            Gestión de Ajustes por Tecnología
           </Title>
           <Text type="secondary" style={{ fontSize: '1.1rem' }}>
-            Administración de archivos CSV de Norma Minsal para codificación GRD-FONASA
+            Administración de archivos Excel de ajustes por tecnología para cálculos GRD-FONASA
           </Text>
         </div>
 
-        {/* Selector de norma activa */}
+        {/* Selector de archivo activo */}
         <Card className="uc-card" style={{ marginBottom: '2rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <Title level={4} style={{ margin: 0 }}>
-                Norma Activa para Codificación
+                Archivo Activo para Cálculos
               </Title>
               <Text type="secondary">
-                Selecciona la norma que se utilizará para la codificación de episodios
+                Selecciona el archivo de ajustes por tecnología que se utilizará en los cálculos
               </Text>
             </div>
             <Select
-              value={activeNormFileId}
-              onChange={setActiveNormFile}
+              value={activeAjustesFileId}
+              onChange={setActiveAjustesFile}
               style={{ width: 300 }}
-              placeholder="Seleccionar norma activa"
+              placeholder="Seleccionar archivo activo"
             >
-              {(normFiles || [])
+              {(ajustesFiles || [])
                 .filter(file => file.status === 'COMPLETED' || file.status === 'PARTIALLY_COMPLETED')
                 .map(file => (
                   <Option key={file.id} value={file.id}>
                     <Space>
                       <FileTextOutlined />
                       {file.filename}
-                      {file.isActive && <Tag color="gold">Activa</Tag>}
+                      {file.isActive && <Tag color="gold">Activo</Tag>}
                     </Space>
                   </Option>
                 ))}
@@ -578,7 +461,7 @@ const NormsPage: React.FC = () => {
           items={[
             {
               key: 'upload',
-              label: 'Subir Archivo de Normas',
+              label: 'Subir Archivo de Ajustes',
               children: (
                 <Card className="uc-card">
                   <div style={{ textAlign: 'center', padding: '2rem' }}>
@@ -587,16 +470,15 @@ const NormsPage: React.FC = () => {
                         <UploadOutlined style={{ fontSize: '3rem', color: 'var(--uc-primary-blue)' }} />
                       </p>
                       <p className="ant-upload-text" style={{ fontSize: '1.2rem', fontWeight: 600 }}>
-                        Arrastra tu archivo de normas (CSV o Excel) aquí
+                        Arrastra tu archivo Excel de ajustes por tecnología aquí
                       </p>
                       <p className="ant-upload-hint" style={{ fontSize: '1rem' }}>
                         O haz clic para seleccionar un archivo
                       </p>
                       <p style={{ color: 'var(--uc-gray-500)', fontSize: '0.9rem', marginTop: '1rem' }}>
-                        Formatos soportados: CSV o Excel (.xlsx, .xls) de Norma Minsal<br />
-                        CSV: separador ';' y codificación latin-1<br />
-                        Excel: primera hoja será procesada automáticamente<br />
-                        Columnas: GRD, Tipo GRD, GRAVEDAD, Total Altas, Est Media, Peso Total, etc.<br />
+                        Formato soportado: Excel (.xlsx, .xls)<br />
+                        Primera hoja será procesada automáticamente<br />
+                        Columnas esperadas: Código, Descripción, Monto/Valor<br />
                         Máximo 5MB
                       </p>
                     </Upload.Dragger>
@@ -628,14 +510,14 @@ const NormsPage: React.FC = () => {
                         disabled={!selectedFile}
                         style={{ minWidth: '200px' }}
                       >
-                        {uploading ? 'Subiendo...' : 'Subir Archivo de Normas'}
+                        {uploading ? 'Subiendo...' : 'Subir Archivo de Ajustes'}
                       </Button>
                     </div>
                     
                     {uploading && (
                       <Alert
-                        message="Procesando archivo de normas..."
-                        description="Por favor espera mientras se procesa tu archivo CSV de normas."
+                        message="Procesando archivo de ajustes..."
+                        description="Por favor espera mientras se procesa tu archivo Excel de ajustes por tecnología."
                         type="info"
                         showIcon
                         style={{ marginTop: '1rem' }}
@@ -647,16 +529,16 @@ const NormsPage: React.FC = () => {
             },
             {
               key: 'files',
-              label: 'Archivos de Normas',
+              label: 'Archivos de Ajustes',
               children: (
                 <Card className="uc-card">
                   <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Title level={4} style={{ margin: 0 }}>
-                      Historial de Archivos de Normas
+                      Historial de Archivos de Ajustes
                     </Title>
                     <Button 
                       type="primary" 
-                      onClick={fetchNormFiles}
+                      onClick={fetchAjustesFiles}
                       loading={loading}
                     >
                       Actualizar
@@ -664,8 +546,8 @@ const NormsPage: React.FC = () => {
                   </div>
                   
                   <Table
-                    columns={normFilesColumns}
-                    dataSource={normFiles}
+                    columns={ajustesFilesColumns}
+                    dataSource={ajustesFiles}
                     rowKey="id"
                     loading={loading}
                     pagination={{
@@ -683,9 +565,9 @@ const NormsPage: React.FC = () => {
           ]}
         />
 
-        {/* Modal para ver detalles del archivo de normas */}
+        {/* Modal para ver detalles del archivo de ajustes */}
         <Modal
-          title="Detalles del Archivo de Normas"
+          title="Detalles del Archivo de Ajustes"
           open={viewModalVisible}
           onCancel={() => setViewModalVisible(false)}
           footer={[
@@ -697,62 +579,57 @@ const NormsPage: React.FC = () => {
               type="primary" 
               onClick={() => {
                 setViewModalVisible(false)
-                if (selectedNormFile) {
-                  handleViewNormData(selectedNormFile)
+                if (selectedAjustesFile) {
+                  handleViewAjustesData(selectedAjustesFile)
                 }
               }}
-              disabled={selectedNormFile?.status !== 'COMPLETED' && selectedNormFile?.status !== 'PARTIALLY_COMPLETED'}
+              disabled={selectedAjustesFile?.status !== 'COMPLETED' && selectedAjustesFile?.status !== 'PARTIALLY_COMPLETED'}
             >
               Ver Datos
             </Button>
           ]}
           width={600}
         >
-          {selectedNormFile && (
+          {selectedAjustesFile && (
             <Descriptions column={1} bordered>
               <Descriptions.Item label="Archivo">
-                {selectedNormFile.filename}
+                {selectedAjustesFile.filename}
               </Descriptions.Item>
               <Descriptions.Item label="Descripción">
-                {selectedNormFile.description || 'Sin descripción'}
+                {selectedAjustesFile.description || 'Sin descripción'}
               </Descriptions.Item>
               <Descriptions.Item label="Estado">
-                {getStatusTag(selectedNormFile.status)}
+                {getStatusTag(selectedAjustesFile.status)}
               </Descriptions.Item>
-              {selectedNormFile.isActive && (
+              {selectedAjustesFile.isActive && (
                 <Descriptions.Item label="Estado">
                   <Tag color="gold" icon={<StarFilled />}>
-                    Norma Activa
+                    Archivo Activo
                   </Tag>
                 </Descriptions.Item>
               )}
               <Descriptions.Item label="Total de Filas">
-                {selectedNormFile.totalRows}
+                {selectedAjustesFile.totalRows}
               </Descriptions.Item>
               <Descriptions.Item label="Filas Procesadas">
-                {selectedNormFile.processedRows}
+                {selectedAjustesFile.processedRows}
               </Descriptions.Item>
               <Descriptions.Item label="Filas con Errores">
-                {selectedNormFile.errorRows}
+                {selectedAjustesFile.errorRows}
               </Descriptions.Item>
               <Descriptions.Item label="Fecha de Creación">
-                {new Date(selectedNormFile.createdAt).toLocaleString('es-CL')}
+                {new Date(selectedAjustesFile.createdAt).toLocaleString('es-CL')}
               </Descriptions.Item>
-              {selectedNormFile.completedAt && (
+              {selectedAjustesFile.completedAt && (
                 <Descriptions.Item label="Fecha de Finalización">
-                  {new Date(selectedNormFile.completedAt).toLocaleString('es-CL')}
-                </Descriptions.Item>
-              )}
-              {selectedNormFile.description && (
-                <Descriptions.Item label="Descripción">
-                  {selectedNormFile.description}
+                  {new Date(selectedAjustesFile.completedAt).toLocaleString('es-CL')}
                 </Descriptions.Item>
               )}
             </Descriptions>
           )}
         </Modal>
 
-        {/* Modal para ver datos de normas */}
+        {/* Modal para ver datos de ajustes */}
         <Modal
           title={
             <div
@@ -763,7 +640,7 @@ const NormsPage: React.FC = () => {
                 paddingRight: '3rem',
               }}
             >
-              <span>Datos de Normas - {selectedNormFile?.filename}</span>
+              <span>Datos de Ajustes - {selectedAjustesFile?.filename}</span>
               <Space style={{ gap: '0.5rem' }}>
                 <Tooltip title={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}>
                   <Button
@@ -785,7 +662,7 @@ const NormsPage: React.FC = () => {
               key="export" 
               icon={<DownloadOutlined />}
               onClick={() => {
-                // Implementar exportación de datos de normas
+                // Implementar exportación de datos de ajustes
                 message.info('Función de exportación próximamente')
               }}
             >
@@ -796,15 +673,15 @@ const NormsPage: React.FC = () => {
           style={{ top: isFullscreen ? 10 : 20 }}
         >
           <Table
-            columns={normRowsColumns}
-            dataSource={normRows.filter(item => item && item.id)}
+            columns={ajustesRowsColumns}
+            dataSource={ajustesRows.filter(item => item && item.id)}
             rowKey="id"
             pagination={{
               pageSize: 20,
               showSizeChanger: true,
               showQuickJumper: true,
               showTotal: (total, range) => 
-                `${range[0]}-${range[1]} de ${total} normas`,
+                `${range[0]}-${range[1]} de ${total} ajustes`,
             }}
             scroll={{ x: 800, y: isFullscreen ? '70vh' : 400 }}
             size="small"
@@ -815,4 +692,7 @@ const NormsPage: React.FC = () => {
   )
 }
 
-export default NormsPage
+export default AjustesPage
+
+
+
