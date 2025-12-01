@@ -7,18 +7,38 @@ import LoginCallback from './pages/LoginCallback'
 import AdminPage from './pages/Admin'
 import CodificationPage from './pages/Codification'
 import NormsPage from './pages/NormsPage'
+import UserManagementPage from './pages/UserManagement'
 import PricingPage from './pages/PricingPage'
 import AjustesPage from './pages/AjustesPage'
 import AuditPage from './pages/AuditPage'
 import ReportsPage from './pages/ReportsPage'
 
-const RequireAdmin: React.FC<{ children: React.ReactElement }> = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth()
+const RequireAuth: React.FC<{ children: React.ReactElement; allowedRoles?: string[] }> = ({
+  children,
+  allowedRoles
+}) => {
+  const { isAuthorized, loading, appUser } = useAuth()
   const location = useLocation()
+
   if (loading) return null
-  if (!isAuthenticated) {
+
+  if (!isAuthorized) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
+
+  if (allowedRoles && appUser && !allowedRoles.includes(appUser.role)) {
+    // Redirigir a una ruta apropiada según el rol del usuario en lugar de volver a login
+    const getDefaultRoute = (role?: string) => {
+      if (role === 'Administrador') {
+        return '/admin'
+      }
+      // Para Analista, Codificador, Finanzas u otros roles, redirigir a codification
+      return '/codification'
+    }
+    const defaultRoute = getDefaultRoute(appUser.role)
+    return <Navigate to={defaultRoute} replace />
+  }
+
   return children
 }
 
@@ -30,9 +50,9 @@ function App() {
         <Route
           path="/admin"
           element={
-            <RequireAdmin>
+            <RequireAuth allowedRoles={['Administrador']}>
               <AdminPage />
-            </RequireAdmin>
+            </RequireAuth>
           }
         />
         <Route
@@ -46,17 +66,25 @@ function App() {
         <Route
           path="/codification"
           element={
-            <RequireAdmin>
+            <RequireAuth>
               <CodificationPage />
-            </RequireAdmin>
+            </RequireAuth>
           }
         />
         <Route
           path="/norms"
           element={
-            <RequireAdmin>
+            <RequireAuth>
               <NormsPage />
-            </RequireAdmin>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <RequireAuth allowedRoles={['Administrador']}>
+              <UserManagementPage />
+            </RequireAuth>
           }
         />
         <Route
