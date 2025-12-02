@@ -143,6 +143,17 @@ const AuditPage: React.FC = () => {
         { headers: buildUserHeaders() },
         getAccessTokenSilently
       )
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error al cargar los registros de auditoría' }))
+        if (response.status === 401) {
+          message.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.')
+        } else {
+          message.error(errorData.message || 'Error al cargar los registros de auditoría')
+        }
+        return
+      }
+      
       const result = await response.json()
 
       if (result.success) {
@@ -194,11 +205,25 @@ const AuditPage: React.FC = () => {
       title: 'Acción',
       dataIndex: 'action',
       key: 'action',
+      ellipsis: true,
       render: (value: string) => {
         const def = actionDefinitions[value]
         const label = def?.label ?? value
         const color = def?.color ?? 'default'
-        return <Tag color={color}>{label}</Tag>
+        return (
+          <Tag 
+            color={color}
+            style={{ 
+              maxWidth: '100%',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              display: 'inline-block'
+            }}
+          >
+            {label}
+          </Tag>
+        )
       },
       width: 190,
     },

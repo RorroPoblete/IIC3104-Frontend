@@ -264,6 +264,8 @@ const AdminPage: React.FC = () => {
               
               </Card>
           </Col>
+          
+          <Col xs={24} sm={12} lg={6}>
             <Card 
               className="uc-card" 
               hoverable

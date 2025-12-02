@@ -126,6 +126,19 @@ const ReportsPage: React.FC = () => {
         authFetch(`${REPORTES_API_BASE}/tendencia-importaciones`, {}, getAccessTokenSilently),
       ])
 
+      // Verificar que todas las respuestas sean exitosas antes de parsear JSON
+      const responses = [resEstadisticas, resGRD, resConvenio, resEdad, resSexo, resCalculos, resActividad, resTendencia]
+      const failedResponses = responses.filter(res => !res.ok)
+      
+      if (failedResponses.length > 0) {
+        const firstFailed = failedResponses[0]
+        if (firstFailed.status === 401) {
+          message.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.')
+        } else {
+          message.error('Error al cargar algunos reportes')
+        }
+      }
+
       const [
         dataEstadisticas,
         dataGRD,
@@ -136,14 +149,14 @@ const ReportsPage: React.FC = () => {
         dataActividad,
         dataTendencia,
       ] = await Promise.all([
-        resEstadisticas.json(),
-        resGRD.json(),
-        resConvenio.json(),
-        resEdad.json(),
-        resSexo.json(),
-        resCalculos.json(),
-        resActividad.json(),
-        resTendencia.json(),
+        resEstadisticas.ok ? resEstadisticas.json().catch(() => ({ success: false })) : Promise.resolve({ success: false }),
+        resGRD.ok ? resGRD.json().catch(() => ({ success: false })) : Promise.resolve({ success: false }),
+        resConvenio.ok ? resConvenio.json().catch(() => ({ success: false })) : Promise.resolve({ success: false }),
+        resEdad.ok ? resEdad.json().catch(() => ({ success: false })) : Promise.resolve({ success: false }),
+        resSexo.ok ? resSexo.json().catch(() => ({ success: false })) : Promise.resolve({ success: false }),
+        resCalculos.ok ? resCalculos.json().catch(() => ({ success: false })) : Promise.resolve({ success: false }),
+        resActividad.ok ? resActividad.json().catch(() => ({ success: false })) : Promise.resolve({ success: false }),
+        resTendencia.ok ? resTendencia.json().catch(() => ({ success: false })) : Promise.resolve({ success: false }),
       ])
 
       if (dataEstadisticas.success) setEstadisticasGenerales(dataEstadisticas.data)

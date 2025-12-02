@@ -43,6 +43,7 @@ import { useAuth } from '../components/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import UCHeader from '../components/UCHeader'
 import UCBreadcrumb from '../components/UCBreadcrumb'
+import { authFetch } from '../utils/authFetch'
 import type { UploadProps, TableColumnsType } from 'antd'
 
 const API_BASE_URL = (import.meta.env.VITE_BACKEND_BASE_URL ?? 'http://localhost:3000').replace(/\/+$/, '')
@@ -110,7 +111,7 @@ interface CalculatedPrecioBase {
 }
 
 const PricingPage: React.FC = () => {
-  const { user, logout } = useAuth()
+  const { user, logout, getAccessTokenSilently } = useAuth()
   const navigate = useNavigate()
   const [pricingFiles, setPricingFiles] = useState<PricingFile[]>([])
   const [loading, setLoading] = useState(false)
@@ -142,7 +143,22 @@ const PricingPage: React.FC = () => {
   const fetchPricingFiles = async () => {
     setLoading(true)
     try {
-      const response = await fetch(buildPricingUrl('/import/files'))
+      const response = await authFetch(
+        buildPricingUrl('/import/files'),
+        { method: 'GET' },
+        getAccessTokenSilently
+      )
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error al cargar los archivos de tarifas' }))
+        if (response.status === 401) {
+          message.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.')
+        } else {
+          message.error(errorData.message || 'Error al cargar los archivos de tarifas')
+        }
+        return
+      }
+      
       const result = await response.json()
       if (result.success) {
         setPricingFiles(result.data.files)
@@ -163,10 +179,17 @@ const PricingPage: React.FC = () => {
 
   const fetchActiveFile = async () => {
     try {
-      const response = await fetch(buildPricingUrl('/import/active'))
+      const response = await authFetch(
+        buildPricingUrl('/import/active'),
+        { method: 'GET' },
+        getAccessTokenSilently
+      )
       if (!response.ok) {
         // Si no hay archivo activo (404), no es un error crítico
-        // No mostramos error en consola para evitar ruido
+        // Si es 401, es un error de autenticación
+        if (response.status === 401) {
+          message.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.')
+        }
         return
       }
       const result = await response.json()
@@ -181,7 +204,18 @@ const PricingPage: React.FC = () => {
 
   const fetchPricingTarifas = async (fileId: string) => {
     try {
-      const response = await fetch(buildPricingUrl(`/import/files/${fileId}/data`))
+      const response = await authFetch(
+        buildPricingUrl(`/import/files/${fileId}/data`),
+        { method: 'GET' },
+        getAccessTokenSilently
+      )
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error al cargar las tarifas' }))
+        message.error(errorData.message || 'Error al cargar las tarifas')
+        return
+      }
+      
       const result = await response.json()
 
       if (result.success && result.data && result.data.data) {
@@ -205,12 +239,16 @@ const PricingPage: React.FC = () => {
 
   const setActivePricingFile = async (fileId: string) => {
     try {
-      const response = await fetch(buildPricingUrl(`/import/files/${fileId}/activate`), {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await authFetch(
+        buildPricingUrl(`/import/files/${fileId}/activate`),
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         },
-      })
+        getAccessTokenSilently
+      )
       const result = await response.json()
       
       if (result.success) {
@@ -261,10 +299,14 @@ const PricingPage: React.FC = () => {
       formData.append('file', selectedFile)
       formData.append('description', `Precios convenios GRD - ${new Date().toLocaleDateString()}`)
 
-      const response = await fetch(buildPricingUrl('/import'), {
-        method: 'POST',
-        body: formData,
-      })
+      const response = await authFetch(
+        buildPricingUrl('/import'),
+        {
+          method: 'POST',
+          body: formData,
+        },
+        getAccessTokenSilently
+      )
 
       const result = await response.json()
       
@@ -348,7 +390,19 @@ const PricingPage: React.FC = () => {
         params.append('fechaReferencia', fechaStr)
       }
 
-      const response = await fetch(buildPricingUrl(`/calculate?${params.toString()}`))
+      const response = await authFetch(
+        buildPricingUrl(`/calculate?${params.toString()}`),
+        { method: 'GET' },
+        getAccessTokenSilently
+      )
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error al calcular el precio base' }))
+        message.error(errorData.message || 'Error al calcular el precio base')
+        setCalculating(false)
+        return
+      }
+      
       const result = await response.json()
 
       if (result.success) {

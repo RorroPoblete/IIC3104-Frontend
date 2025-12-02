@@ -99,6 +99,18 @@ const CalculoPanel: React.FC<CalculoPanelProps> = ({ visible, episodioId, onClos
         getAccessTokenSilently,
       )
 
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }))
+        if (response.status === 401) {
+          message.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.')
+        } else {
+          message.error(errorData.message || 'Error al cargar el historial de cálculos')
+        }
+        setVersiones([])
+        setUltimoCalculo(null)
+        return
+      }
+
       const result = await response.json()
       if (result.success && result.data && result.data.length > 0) {
         const ultimaVersion = result.data[0]
@@ -110,9 +122,15 @@ const CalculoPanel: React.FC<CalculoPanelProps> = ({ visible, episodioId, onClos
           { method: 'GET' },
           getAccessTokenSilently,
         )
-        const detalleResult = await detalleResponse.json()
-        if (detalleResult.success) {
-          setUltimoCalculo(detalleResult.data.breakdown)
+        
+        if (!detalleResponse.ok) {
+          console.warn('Error al obtener detalle del cálculo:', detalleResponse.status)
+          // No mostramos error aquí porque ya tenemos las versiones
+        } else {
+          const detalleResult = await detalleResponse.json()
+          if (detalleResult.success) {
+            setUltimoCalculo(detalleResult.data.breakdown)
+          }
         }
       } else {
         setVersiones([])
@@ -120,7 +138,9 @@ const CalculoPanel: React.FC<CalculoPanelProps> = ({ visible, episodioId, onClos
       }
     } catch (error) {
       console.error('Error al obtener versiones:', error)
-      message.error('Error al cargar el historial de cálculos')
+      message.error('Error de conexión al cargar el historial de cálculos')
+      setVersiones([])
+      setUltimoCalculo(null)
     } finally {
       setLoadingVersiones(false)
     }

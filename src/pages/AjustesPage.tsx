@@ -34,6 +34,7 @@ import { useAuth } from '../components/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import UCHeader from '../components/UCHeader'
 import UCBreadcrumb from '../components/UCBreadcrumb'
+import { authFetch } from '../utils/authFetch'
 import type { UploadProps, TableColumnsType } from 'antd'
 
 const API_BASE_URL = (import.meta.env.VITE_BACKEND_BASE_URL ?? 'http://localhost:3000').replace(/\/+$/, '')
@@ -78,7 +79,7 @@ interface AjustesRow {
 }
 
 const AjustesPage: React.FC = () => {
-  const { user, logout } = useAuth()
+  const { user, logout, getAccessTokenSilently } = useAuth()
   const navigate = useNavigate()
   const [ajustesFiles, setAjustesFiles] = useState<AjustesFile[]>([])
   const [loading, setLoading] = useState(false)
@@ -107,7 +108,22 @@ const AjustesPage: React.FC = () => {
   const fetchAjustesFiles = async () => {
     setLoading(true)
     try {
-      const response = await fetch(buildAjustesUrl('/import/files'))
+      const response = await authFetch(
+        buildAjustesUrl('/import/files'),
+        { method: 'GET' },
+        getAccessTokenSilently
+      )
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error al cargar los archivos de ajustes' }))
+        if (response.status === 401) {
+          message.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.')
+        } else {
+          message.error(errorData.message || 'Error al cargar los archivos de ajustes')
+        }
+        return
+      }
+      
       const result = await response.json()
       if (result.success) {
         setAjustesFiles(result.data.files)
@@ -128,7 +144,18 @@ const AjustesPage: React.FC = () => {
 
   const fetchAjustesRows = async (ajustesFileId: string) => {
     try {
-      const response = await fetch(buildAjustesUrl(`/import/files/${ajustesFileId}/data`))
+      const response = await authFetch(
+        buildAjustesUrl(`/import/files/${ajustesFileId}/data`),
+        { method: 'GET' },
+        getAccessTokenSilently
+      )
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error al cargar las filas de ajustes' }))
+        message.error(errorData.message || 'Error al cargar las filas de ajustes')
+        return
+      }
+      
       const result = await response.json()
 
       if (result.success && result.data && result.data.data) {
@@ -152,12 +179,23 @@ const AjustesPage: React.FC = () => {
 
   const setActiveAjustesFile = async (ajustesFileId: string) => {
     try {
-      const response = await fetch(buildAjustesUrl(`/import/files/${ajustesFileId}/activate`), {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await authFetch(
+        buildAjustesUrl(`/import/files/${ajustesFileId}/activate`),
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         },
-      })
+        getAccessTokenSilently
+      )
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error al establecer el archivo de ajustes activo' }))
+        message.error(errorData.message || 'Error al establecer el archivo de ajustes activo')
+        return
+      }
+      
       const result = await response.json()
       
       if (result.success) {
@@ -206,10 +244,14 @@ const AjustesPage: React.FC = () => {
       formData.append('file', selectedFile)
       formData.append('description', `Ajustes por Tecnología - ${new Date().toLocaleDateString()}`)
 
-      const response = await fetch(buildAjustesUrl('/import/excel'), {
-        method: 'POST',
-        body: formData,
-      })
+      const response = await authFetch(
+        buildAjustesUrl('/import/excel'),
+        {
+          method: 'POST',
+          body: formData,
+        },
+        getAccessTokenSilently
+      )
 
       const result = await response.json()
       

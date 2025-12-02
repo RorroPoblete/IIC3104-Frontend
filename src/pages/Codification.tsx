@@ -531,22 +531,16 @@ const CodificationPage: React.FC = () => {
     }
 
     try {
-      const token = await getAccessTokenSilently({
-        authorizationParams: { 
-          audience: window.__APP_CONFIG__?.auth0Audience,
-          scope: 'openid profile email',
-        },
-      })
-      
       const url = buildCodificationUrl(`/batches/${selectedBatch.id}/normalized/export`)
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      })
+      const response = await authFetch(
+        url,
+        { method: 'GET' },
+        getAccessTokenSilently
+      )
 
       if (!response.ok) {
-        throw new Error('Error al descargar el archivo')
+        const errorData = await response.json().catch(() => ({ message: 'Error al descargar el archivo' }))
+        throw new Error(errorData.message || 'Error al descargar el archivo')
       }
 
       const blob = await response.blob()
@@ -621,6 +615,17 @@ const CodificationPage: React.FC = () => {
     setLoading(true)
     try {
       const response = await authFetch(buildCodificationUrl('/batches'), { method: 'GET' }, getAccessTokenSilently)
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error al cargar los lotes de importación' }))
+        if (response.status === 401) {
+          message.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.')
+        } else {
+          message.error(errorData.message || 'Error al cargar los lotes de importación')
+        }
+        return
+      }
+      
       const result = await response.json()
       if (result.success) {
         setBatches(result.data.batches)
@@ -628,6 +633,7 @@ const CodificationPage: React.FC = () => {
         message.error('Error al cargar los lotes de importación')
       }
     } catch (error) {
+      console.error('Error en fetchBatches:', error)
       message.error('Error de conexión al cargar los lotes')
     } finally {
       setLoading(false)
@@ -637,6 +643,17 @@ const CodificationPage: React.FC = () => {
   const fetchNormalizedData = async (batchId: string) => {
     try {
       const response = await authFetch(buildCodificationUrl(`/batches/${batchId}/normalized`), { method: 'GET' }, getAccessTokenSilently)
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error al cargar los datos normalizados' }))
+        if (response.status === 401) {
+          message.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.')
+        } else {
+          message.error(errorData.message || 'Error al cargar los datos normalizados')
+        }
+        return
+      }
+      
       const result = await response.json()
 
       if (result.success && result.data && result.data.normalizedData) {

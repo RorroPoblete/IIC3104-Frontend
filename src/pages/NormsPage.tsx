@@ -136,6 +136,17 @@ const NormsPage: React.FC = () => {
         { headers: buildUserHeaders() },
         getAccessTokenSilently
       )
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error al cargar los archivos de normas' }))
+        if (response.status === 401) {
+          message.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.')
+        } else {
+          message.error(errorData.message || 'Error al cargar los archivos de normas')
+        }
+        return
+      }
+      
       const result = await response.json()
       if (result.success) {
         setNormFiles(result.data.files)
@@ -161,6 +172,13 @@ const NormsPage: React.FC = () => {
         { headers: buildUserHeaders() },
         getAccessTokenSilently
       )
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error al cargar las filas de normas' }))
+        message.error(errorData.message || 'Error al cargar las filas de normas')
+        return
+      }
+      
       const result = await response.json()
 
       if (result.success && result.data && result.data.data) {
@@ -192,6 +210,13 @@ const NormsPage: React.FC = () => {
         },
         getAccessTokenSilently
       )
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error al establecer la norma activa' }))
+        message.error(errorData.message || 'Error al establecer la norma activa')
+        return
+      }
+      
       const result = await response.json()
       
       if (result.success) {
