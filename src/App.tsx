@@ -8,6 +8,10 @@ import AdminPage from './pages/Admin'
 import CodificationPage from './pages/Codification'
 import NormsPage from './pages/NormsPage'
 import UserManagementPage from './pages/UserManagement'
+import PricingPage from './pages/PricingPage'
+import AjustesPage from './pages/AjustesPage'
+import AuditPage from './pages/AuditPage'
+import ReportsPage from './pages/ReportsPage'
 
 const RequireAuth: React.FC<{ children: React.ReactElement; allowedRoles?: string[] }> = ({
   children,
@@ -52,6 +56,14 @@ function App() {
           }
         />
         <Route
+          path="/auditoria"
+          element={
+            <RequireAuth allowedRoles={['Administrador']}>
+              <AuditPage />
+            </RequireAuth>
+          }
+        />
+        <Route
           path="/codification"
           element={
             <RequireAuth>
@@ -72,6 +84,30 @@ function App() {
           element={
             <RequireAuth allowedRoles={['Administrador']}>
               <UserManagementPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/pricing"
+          element={
+            <RequireAuth allowedRoles={['Administrador']}>
+              <PricingPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/ajustes"
+          element={
+            <RequireAuth allowedRoles={['Administrador']}>
+              <AjustesPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/reportes"
+          element={
+            <RequireAuth allowedRoles={['Administrador']}>
+              <ReportsPage />
             </RequireAuth>
           }
         />

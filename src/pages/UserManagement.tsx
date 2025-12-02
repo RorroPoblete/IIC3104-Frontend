@@ -52,12 +52,20 @@ const UserManagementPage: React.FC = () => {
     setLoadingUsers(true)
     try {
       const res = await authFetch(buildUsersUrl(), { method: 'GET' }, getAccessTokenSilently)
-      if (!res.ok) throw new Error('No se pudieron cargar los usuarios')
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: 'No se pudieron cargar los usuarios' }))
+        if (res.status === 401) {
+          message.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.')
+        } else {
+          message.error(errorData.message || 'No se pudieron cargar los usuarios')
+        }
+        return
+      }
       const data: ManagedUser[] = await res.json()
       setManagedUsers(data)
     } catch (err) {
       console.error(err)
-      message.error('No se pudieron cargar los usuarios')
+      message.error('Error de conexión al cargar los usuarios')
     } finally {
       setLoadingUsers(false)
     }
@@ -73,14 +81,18 @@ const UserManagementPage: React.FC = () => {
         },
         getAccessTokenSilently
       )
-      if (!res.ok) throw new Error('No se pudo crear el usuario')
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: 'No se pudo crear el usuario' }))
+        message.error(errorData.message || 'No se pudo crear el usuario')
+        return
+      }
       const created: ManagedUser = await res.json()
       setManagedUsers((prev) => [...prev, created])
       form.resetFields()
       message.success('Usuario agregado correctamente')
     } catch (err) {
       console.error(err)
-      message.error('No se pudo crear el usuario')
+      message.error('Error de conexión al crear el usuario')
     }
   }
 
@@ -100,7 +112,11 @@ const UserManagementPage: React.FC = () => {
         },
         getAccessTokenSilently
       )
-      if (!res.ok) throw new Error('No se pudo actualizar el usuario')
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: 'No se pudo actualizar el usuario' }))
+        message.error(errorData.message || 'No se pudo actualizar el usuario')
+        return
+      }
       const updated: ManagedUser = await res.json()
       setManagedUsers((prev) =>
         prev.map((u) => (u.id === editingUser.id ? updated : u))
@@ -109,7 +125,7 @@ const UserManagementPage: React.FC = () => {
       message.success('Usuario actualizado correctamente')
     } catch (err) {
       console.error(err)
-      message.error('No se pudo actualizar el usuario')
+      message.error('Error de conexión al actualizar el usuario')
     }
   }
 
@@ -120,12 +136,16 @@ const UserManagementPage: React.FC = () => {
         { method: 'DELETE' },
         getAccessTokenSilently
       )
-      if (!res.ok) throw new Error('No se pudo eliminar el usuario')
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: 'No se pudo eliminar el usuario' }))
+        message.error(errorData.message || 'No se pudo eliminar el usuario')
+        return
+      }
       setManagedUsers((prev) => prev.filter((u) => u.id !== id))
       message.success('Usuario eliminado')
     } catch (err) {
       console.error(err)
-      message.error('No se pudo eliminar el usuario')
+      message.error('Error de conexión al eliminar el usuario')
     }
   }
 

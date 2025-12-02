@@ -31,7 +31,7 @@ La aplicación se abre en `http://localhost:8000/login`
 npm run build
 ```
 
-## Archivos principales
+## Archivos principales 
 
 - `src/pages/Login.tsx` - Página de login
 - `src/pages/Admin.tsx` - Panel de administración
