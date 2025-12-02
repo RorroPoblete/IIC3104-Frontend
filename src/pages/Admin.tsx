@@ -3,11 +3,9 @@ import { Card, Typography, Button, Row, Col, Statistic } from 'antd'
 import { 
   UserOutlined, 
   FileTextOutlined, 
-  DatabaseOutlined, 
   BarChartOutlined,
   SettingOutlined,
   TeamOutlined,
-  MedicineBoxOutlined,
   BookOutlined,
   DollarOutlined,
   ToolOutlined,
