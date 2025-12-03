@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="96" height="96" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="ucPurple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#512C7A"/>
+      <stop offset="100%" stop-color="#6F4BA1"/>
+    </linearGradient>
+    <linearGradient id="ucGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C3922E"/>
+      <stop offset="100%" stop-color="#E0B55A"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="80" height="80" rx="16" fill="url(#ucPurple)"/>
+  <path d="M48 22c1.8 0 3.2 1.4 3.2 3.2v17.6h17.6c1.8 0 3.2 1.4 3.2 3.2s-1.4 3.2-3.2 3.2H51.2v17.6c0 1.8-1.4 3.2-3.2 3.2s-3.2-1.4-3.2-3.2V49.2H27.2c-1.8 0-3.2-1.4-3.2-3.2s1.4-3.2 3.2-3.2h17.6V25.2C44.8 23.4 46.2 22 48 22Z" fill="url(#ucGold)"/>
+  <circle cx="48" cy="48" r="10" fill="#FFFFFF" opacity="0.12"/>
+  <text x="48" y="82" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#FFFFFF" opacity="0.8">UC CHRISTUS</text>
+</svg>
