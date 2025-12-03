@@ -1,10 +1,9 @@
-import React from 'react'
-import { Card, Typography, Button, Row, Col, Statistic } from 'antd'
+import React, { useEffect, useState } from 'react'
+import { Card, Typography, Button, Row, Col } from 'antd'
 import { 
   UserOutlined, 
   FileTextOutlined, 
   BarChartOutlined,
-  SettingOutlined,
   TeamOutlined,
   BookOutlined,
   DollarOutlined,
@@ -15,11 +14,15 @@ import { useAuth } from '../components/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import UCHeader from '../components/UCHeader'
 import UCBreadcrumb from '../components/UCBreadcrumb'
+import { authFetch } from '../utils/authFetch'
+
+const API_BASE_URL = (import.meta.env.VITE_BACKEND_BASE_URL ?? 'http://localhost:3000').replace(/\/+$/, '')
 
 const AdminPage: React.FC = () => {
-  const { user, appUser, logout } = useAuth()
+  const { user, appUser, logout, getAccessTokenSilently } = useAuth()
   const navigate = useNavigate()
   const userEmail = appUser?.email ?? user?.email
+  const [totalUsers, setTotalUsers] = useState<number>(0)
 
   const handleLogout = () => {
     logout()
@@ -52,6 +55,26 @@ const AdminPage: React.FC = () => {
   const handleNavigateToReports = () => {
     navigate('/reportes')
   }
+
+  // Cargar número total de usuarios
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await authFetch(
+          `${API_BASE_URL}/api/users`,
+          { method: 'GET' },
+          getAccessTokenSilently
+        )
+        if (response.ok) {
+          const users = await response.json()
+          setTotalUsers(users.length)
+        }
+      } catch (error) {
+        console.error('Error cargando usuarios:', error)
+      }
+    }
+    fetchUsers()
+  }, [getAccessTokenSilently])
 
   return (
     <div className="admin-page">
@@ -290,7 +313,7 @@ const AdminPage: React.FC = () => {
             <Card 
               className="uc-card" 
               hoverable
-              onClick={handleNavigateToReports}
+              onClick={handleNavigateToUsers}
               style={{ cursor: 'pointer', height: '100%' }}
             >
               <div className="uc-card-content">
@@ -302,10 +325,10 @@ const AdminPage: React.FC = () => {
                   }} 
                 />
                 <Typography.Title level={4} style={{ color: 'var(--uc-gray-900)', marginBottom: '0.5rem' }}>
-                  Reportes y Análisis
+                  Gestión de Usuarios
                 </Typography.Title>
                 <Typography.Paragraph style={{ color: 'var(--uc-gray-600)', marginBottom: '1rem' }}>
-                  Visualiza estadísticas, gráficos y análisis de datos del sistema
+                  {totalUsers} {totalUsers === 1 ? 'usuario registrado' : 'usuarios registrados'} en el sistema
                 </Typography.Paragraph>
                 <Button type="primary" icon={<BarChartOutlined />} size="large" className="uc-card-button">
                   Ver reportes
@@ -325,10 +348,10 @@ const AdminPage: React.FC = () => {
                   }} 
                 />
                 <Typography.Title level={4} style={{ color: 'var(--uc-gray-900)', marginBottom: '0.5rem' }}>
-                  Configuración
+                  Reportes y Análisis
                 </Typography.Title>
                 <Typography.Paragraph style={{ color: 'var(--uc-gray-600)', marginBottom: '1rem' }}>
-                  Configurar parámetros del sistema y usuarios (Próximamente)
+                  Visualiza estadísticas, gráficos y análisis de datos del sistema
                 </Typography.Paragraph>
                 <Button disabled icon={<SettingOutlined />} size="large" className="uc-card-button">
                   Próximamente
