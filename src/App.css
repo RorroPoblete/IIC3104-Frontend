@@ -139,12 +139,14 @@
 
 .uc-actions-row > .ant-col {
   display: flex;
+  height: 100%;
 }
 
 .uc-actions-row .uc-card {
   width: 100%;
   height: 100%;
   display: flex;
+  flex-direction: column;
 }
 
 .uc-actions-row .uc-card .ant-card-body {
