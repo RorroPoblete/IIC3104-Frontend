@@ -293,7 +293,7 @@ const AdminPage: React.FC = () => {
                   Gestión de Usuarios
                 </Typography.Title>
                 <Typography.Paragraph style={{ color: 'var(--uc-gray-600)', marginBottom: '1rem' }}>
-                  Actualmente se encuentran {totalUsers} {totalUsers === 1 ? 'usuario registrado' : 'usuarios registrados'} en el sistema
+                  Actualmente hay {totalUsers} {totalUsers === 1 ? 'usuario registrado' : 'usuarios registrados'} en el sistema
                 </Typography.Paragraph>
                 <Button type="primary" icon={<TeamOutlined />} size="large">
                   Ver usuarios
