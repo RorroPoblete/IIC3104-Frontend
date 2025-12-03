@@ -209,7 +209,7 @@ const AdminPage: React.FC = () => {
                   Gestión de Precios
                 </Typography.Title>
                 <Typography.Paragraph style={{ color: 'var(--uc-gray-600)', marginBottom: '1rem' }}>
-                  Administrar archivos de tarifas para cálculo de precios base GRD
+                  Administrar archivos de tarifas para realizar el cálculo de precios base GRD
                 </Typography.Paragraph>
                 <Button type="primary" icon={<DollarOutlined />} size="large">
                   Acceder
@@ -293,7 +293,7 @@ const AdminPage: React.FC = () => {
                   Gestión de Usuarios
                 </Typography.Title>
                 <Typography.Paragraph style={{ color: 'var(--uc-gray-600)', marginBottom: '1rem' }}>
-                  {totalUsers} {totalUsers === 1 ? 'usuario registrado' : 'usuarios registrados'} en el sistema
+                  Actualmente se encuentran {totalUsers} {totalUsers === 1 ? 'usuario registrado' : 'usuarios registrados'} en el sistema
                 </Typography.Paragraph>
                 <Button type="primary" icon={<TeamOutlined />} size="large">
                   Ver usuarios
