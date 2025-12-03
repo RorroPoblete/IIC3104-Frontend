@@ -3,10 +3,8 @@ import { Card, Typography, Button, Row, Col } from 'antd'
 import { 
   UserOutlined, 
   FileTextOutlined, 
-  DatabaseOutlined, 
   BarChartOutlined,
   TeamOutlined,
-  MedicineBoxOutlined,
   BookOutlined,
   DollarOutlined,
   ToolOutlined,
@@ -135,7 +133,11 @@ const AdminPage: React.FC = () => {
         </Card>
 
         {/* Quick Actions */}
-        <Row gutter={[16, 16]} style={{ marginBottom: '2rem' }}>
+        <Row
+          className="uc-actions-row"
+          gutter={[16, 16]}
+          style={{ marginBottom: '2rem' }}
+        >
           <Col xs={24} sm={12} lg={6}>
             <Card 
               className="uc-card" 
@@ -143,7 +145,7 @@ const AdminPage: React.FC = () => {
               onClick={handleNavigateToCodification}
               style={{ cursor: 'pointer', height: '100%' }}
             >
-              <div style={{ textAlign: 'center' }}>
+              <div className="uc-card-content">
                 <FileTextOutlined 
                   style={{ 
                     fontSize: '2.5rem', 
@@ -157,7 +159,7 @@ const AdminPage: React.FC = () => {
                 <Typography.Paragraph style={{ color: 'var(--uc-gray-600)', marginBottom: '1rem' }}>
                   Importar y gestionar archivos CSV para codificación de episodios médicos
                 </Typography.Paragraph>
-                <Button type="primary" icon={<FileTextOutlined />} size="large">
+                <Button type="primary" icon={<FileTextOutlined />} size="large" className="uc-card-button">
                   Acceder
                 </Button>
               </div>
@@ -171,7 +173,7 @@ const AdminPage: React.FC = () => {
               onClick={handleNavigateToNorms}
               style={{ cursor: 'pointer', height: '100%' }}
             >
-              <div style={{ textAlign: 'center' }}>
+              <div className="uc-card-content">
                 <BookOutlined 
                   style={{ 
                     fontSize: '2.5rem', 
@@ -185,7 +187,7 @@ const AdminPage: React.FC = () => {
                 <Typography.Paragraph style={{ color: 'var(--uc-gray-600)', marginBottom: '1rem' }}>
                   Administrar archivos CSV de Norma Minsal para codificación GRD-FONASA
                 </Typography.Paragraph>
-                <Button type="primary" icon={<BookOutlined />} size="large">
+                <Button type="primary" icon={<BookOutlined />} size="large" className="uc-card-button">
                   Acceder
                 </Button>
               </div>
@@ -199,7 +201,7 @@ const AdminPage: React.FC = () => {
               onClick={handleNavigateToPricing}
               style={{ cursor: 'pointer', height: '100%' }}
             >
-              <div style={{ textAlign: 'center' }}>
+              <div className="uc-card-content">
                 <DollarOutlined 
                   style={{ 
                     fontSize: '2.5rem', 
@@ -213,7 +215,7 @@ const AdminPage: React.FC = () => {
                 <Typography.Paragraph style={{ color: 'var(--uc-gray-600)', marginBottom: '1rem' }}>
                   Administrar archivos de tarifas para cálculo de precios base GRD
                 </Typography.Paragraph>
-                <Button type="primary" icon={<DollarOutlined />} size="large">
+                <Button type="primary" icon={<DollarOutlined />} size="large" className="uc-card-button">
                   Acceder
                 </Button>
               </div>
@@ -227,7 +229,7 @@ const AdminPage: React.FC = () => {
               onClick={handleNavigateToAjustes}
               style={{ cursor: 'pointer', height: '100%' }}
             >
-              <div style={{ textAlign: 'center' }}>
+              <div className="uc-card-content">
                 <ToolOutlined 
                   style={{ 
                     fontSize: '2.5rem', 
@@ -241,7 +243,7 @@ const AdminPage: React.FC = () => {
                 <Typography.Paragraph style={{ color: 'var(--uc-gray-600)', marginBottom: '1rem' }}>
                   Administrar archivos Excel de ajustes por tecnología para cálculos GRD
                 </Typography.Paragraph>
-                <Button type="primary" icon={<ToolOutlined />} size="large">
+                <Button type="primary" icon={<ToolOutlined />} size="large" className="uc-card-button">
                   Acceder
                 </Button>
               </div>
@@ -255,7 +257,7 @@ const AdminPage: React.FC = () => {
               onClick={handleNavigateToAudit}
               style={{ cursor: 'pointer', height: '100%' }}
             >
-              <div style={{ textAlign: 'center' }}>
+              <div className="uc-card-content">
                 <AuditOutlined 
                   style={{ 
                     fontSize: '2.5rem', 
@@ -269,8 +271,39 @@ const AdminPage: React.FC = () => {
                 <Typography.Paragraph style={{ color: 'var(--uc-gray-600)', marginBottom: '1rem' }}>
                   Revisa quién modificó, qué campo cambió y los valores antes/después.
                 </Typography.Paragraph>
-                <Button type="primary" icon={<AuditOutlined />} size="large">
+                <Button type="primary" icon={<AuditOutlined />} size="large" className="uc-card-button">
                   Ver auditoría
+                </Button>
+              </div>
+            </Card>
+          </Col>
+          
+          <Col xs={24} sm={12} lg={6}>
+            <Card
+              className="uc-card"
+              hoverable
+              onClick={handleNavigateToUsers}
+              style={{ cursor: 'pointer', height: '100%' }}
+            >
+              <div className="uc-card-content">
+                <TeamOutlined
+                  style={{
+                    fontSize: '2.5rem',
+                    color: 'var(--uc-primary-blue)',
+                    marginBottom: '1rem'
+                  }}
+                />
+                <Typography.Title level={4} style={{ color: 'var(--uc-gray-900)', marginBottom: '0.5rem' }}>
+                  Usuarios Activos
+                </Typography.Title>
+                <Statistic
+                  title="Usuarios activos"
+                  value={1}
+                  valueStyle={{ color: 'var(--uc-warning)' }}
+                  style={{ marginBottom: '1rem' }}
+                />
+                <Button type="primary" icon={<TeamOutlined />} size="large" className="uc-card-button">
+                  Ver usuarios
                 </Button>
               </div>
             </Card>
@@ -283,8 +316,8 @@ const AdminPage: React.FC = () => {
               onClick={handleNavigateToUsers}
               style={{ cursor: 'pointer', height: '100%' }}
             >
-              <div style={{ textAlign: 'center' }}>
-                <TeamOutlined 
+              <div className="uc-card-content">
+                <BarChartOutlined 
                   style={{ 
                     fontSize: '2.5rem', 
                     color: 'var(--uc-primary-blue)',
@@ -297,22 +330,17 @@ const AdminPage: React.FC = () => {
                 <Typography.Paragraph style={{ color: 'var(--uc-gray-600)', marginBottom: '1rem' }}>
                   {totalUsers} {totalUsers === 1 ? 'usuario registrado' : 'usuarios registrados'} en el sistema
                 </Typography.Paragraph>
-                <Button type="primary" icon={<TeamOutlined />} size="large">
-                  Ver usuarios
+                <Button type="primary" icon={<BarChartOutlined />} size="large" className="uc-card-button">
+                  Ver reportes
                 </Button>
               </div>
             </Card>
           </Col>
           
           <Col xs={24} sm={12} lg={6}>
-            <Card 
-              className="uc-card" 
-              hoverable
-              onClick={handleNavigateToReports}
-              style={{ cursor: 'pointer', height: '100%' }}
-            >
-              <div style={{ textAlign: 'center' }}>
-                <BarChartOutlined 
+            <Card className="uc-card" hoverable style={{ cursor: 'pointer', height: '100%' }}>
+              <div className="uc-card-content">
+                <SettingOutlined 
                   style={{ 
                     fontSize: '2.5rem', 
                     color: 'var(--uc-primary-blue)',
@@ -325,8 +353,8 @@ const AdminPage: React.FC = () => {
                 <Typography.Paragraph style={{ color: 'var(--uc-gray-600)', marginBottom: '1rem' }}>
                   Visualiza estadísticas, gráficos y análisis de datos del sistema
                 </Typography.Paragraph>
-                <Button type="primary" icon={<BarChartOutlined />} size="large">
-                  Ver reportes
+                <Button disabled icon={<SettingOutlined />} size="large" className="uc-card-button">
+                  Próximamente
                 </Button>
               </div>
             </Card>

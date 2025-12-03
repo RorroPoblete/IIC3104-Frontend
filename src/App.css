@@ -133,6 +133,38 @@
   margin: 0 auto;
 }
 
+.uc-actions-row {
+  align-items: stretch !important;
+}
+
+.uc-actions-row > .ant-col {
+  display: flex;
+}
+
+.uc-actions-row .uc-card {
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+.uc-actions-row .uc-card .ant-card-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.uc-card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  height: 100%;
+}
+
+.uc-card-button {
+  margin-top: auto;
+}
+
 .text-center {
   text-align: center;
 }

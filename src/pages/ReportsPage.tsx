@@ -12,11 +12,9 @@ import {
   Space,
 } from 'antd'
 import {
-  BarChartOutlined,
   FileTextOutlined,
   CalculatorOutlined,
   DatabaseOutlined,
-  TeamOutlined,
   ArrowLeftOutlined,
   ReloadOutlined,
   AuditOutlined,
@@ -361,7 +359,10 @@ const ReportsPage: React.FC = () => {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ sexo, cantidad }) => `${sexo}: ${cantidad}`}
+                        label={(entry: any) => {
+                          const data = entry as DistribucionItem
+                          return `${data.sexo}: ${data.cantidad}`
+                        }}
                         outerRadius={80}
                         fill="#8884d8"
                         dataKey="cantidad"
