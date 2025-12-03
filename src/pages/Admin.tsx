@@ -1,11 +1,10 @@
-import React from 'react'
-import { Card, Typography, Button, Row, Col, Statistic } from 'antd'
+import React, { useEffect, useState } from 'react'
+import { Card, Typography, Button, Row, Col } from 'antd'
 import { 
   UserOutlined, 
   FileTextOutlined, 
   DatabaseOutlined, 
   BarChartOutlined,
-  SettingOutlined,
   TeamOutlined,
   MedicineBoxOutlined,
   BookOutlined,
@@ -17,11 +16,15 @@ import { useAuth } from '../components/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import UCHeader from '../components/UCHeader'
 import UCBreadcrumb from '../components/UCBreadcrumb'
+import { authFetch } from '../utils/authFetch'
+
+const API_BASE_URL = (import.meta.env.VITE_BACKEND_BASE_URL ?? 'http://localhost:3000').replace(/\/+$/, '')
 
 const AdminPage: React.FC = () => {
-  const { user, appUser, logout } = useAuth()
+  const { user, appUser, logout, getAccessTokenSilently } = useAuth()
   const navigate = useNavigate()
   const userEmail = appUser?.email ?? user?.email
+  const [totalUsers, setTotalUsers] = useState<number>(0)
 
   const handleLogout = () => {
     logout()
@@ -54,6 +57,26 @@ const AdminPage: React.FC = () => {
   const handleNavigateToReports = () => {
     navigate('/reportes')
   }
+
+  // Cargar número total de usuarios
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await authFetch(
+          `${API_BASE_URL}/api/users`,
+          { method: 'GET' },
+          getAccessTokenSilently
+        )
+        if (response.ok) {
+          const users = await response.json()
+          setTotalUsers(users.length)
+        }
+      } catch (error) {
+        console.error('Error cargando usuarios:', error)
+      }
+    }
+    fetchUsers()
+  }, [getAccessTokenSilently])
 
   return (
     <div className="admin-page">
@@ -254,15 +277,31 @@ const AdminPage: React.FC = () => {
           </Col>
           
           <Col xs={24} sm={12} lg={6}>
-            <Card className="uc-card" hoverable onClick={handleNavigateToUsers} style={{ cursor: 'pointer' }}>
-              <Statistic
-                title="Usuarios Activos"
-                value={1}
-                prefix={<TeamOutlined />}
-                valueStyle={{ color: 'var(--uc-warning)' }}
-              />
-              
-              </Card>
+            <Card 
+              className="uc-card" 
+              hoverable
+              onClick={handleNavigateToUsers}
+              style={{ cursor: 'pointer', height: '100%' }}
+            >
+              <div style={{ textAlign: 'center' }}>
+                <TeamOutlined 
+                  style={{ 
+                    fontSize: '2.5rem', 
+                    color: 'var(--uc-primary-blue)',
+                    marginBottom: '1rem'
+                  }} 
+                />
+                <Typography.Title level={4} style={{ color: 'var(--uc-gray-900)', marginBottom: '0.5rem' }}>
+                  Gestión de Usuarios
+                </Typography.Title>
+                <Typography.Paragraph style={{ color: 'var(--uc-gray-600)', marginBottom: '1rem' }}>
+                  {totalUsers} {totalUsers === 1 ? 'usuario registrado' : 'usuarios registrados'} en el sistema
+                </Typography.Paragraph>
+                <Button type="primary" icon={<TeamOutlined />} size="large">
+                  Ver usuarios
+                </Button>
+              </div>
+            </Card>
           </Col>
           
           <Col xs={24} sm={12} lg={6}>
@@ -288,29 +327,6 @@ const AdminPage: React.FC = () => {
                 </Typography.Paragraph>
                 <Button type="primary" icon={<BarChartOutlined />} size="large">
                   Ver reportes
-                </Button>
-              </div>
-            </Card>
-          </Col>
-          
-          <Col xs={24} sm={12} lg={6}>
-            <Card className="uc-card" hoverable style={{ cursor: 'pointer', height: '100%' }}>
-              <div style={{ textAlign: 'center' }}>
-                <SettingOutlined 
-                  style={{ 
-                    fontSize: '2.5rem', 
-                    color: 'var(--uc-primary-blue)',
-                    marginBottom: '1rem'
-                  }} 
-                />
-                <Typography.Title level={4} style={{ color: 'var(--uc-gray-900)', marginBottom: '0.5rem' }}>
-                  Configuración
-                </Typography.Title>
-                <Typography.Paragraph style={{ color: 'var(--uc-gray-600)', marginBottom: '1rem' }}>
-                  Configurar parámetros del sistema y usuarios (Próximamente)
-                </Typography.Paragraph>
-                <Button disabled icon={<SettingOutlined />} size="large">
-                  Próximamente
                 </Button>
               </div>
             </Card>

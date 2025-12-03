@@ -1565,14 +1565,19 @@ const CodificationPage: React.FC = () => {
     })
   }, [dataColumns, editableFields])
 
-  // Inicializar columnas visibles
+  // Inicializar columnas visibles (solo una vez al montar el componente)
+  const [columnsInitialized, setColumnsInitialized] = useState(false)
+  
   useEffect(() => {
-    const initialColumns: Record<string, boolean> = {}
-    dataColumnsWithPermissions.forEach(col => {
-      initialColumns[col.key as string] = true
-    })
-    setVisibleColumns(initialColumns)
-  }, [dataColumnsWithPermissions])
+    if (!columnsInitialized && dataColumnsWithPermissions.length > 0) {
+      const initialColumns: Record<string, boolean> = {}
+      dataColumnsWithPermissions.forEach(col => {
+        initialColumns[col.key as string] = true
+      })
+      setVisibleColumns(initialColumns)
+      setColumnsInitialized(true)
+    }
+  }, [dataColumnsWithPermissions, columnsInitialized])
 
   // Filtrar columnas basado en búsqueda y selección
   const filteredColumns = dataColumnsWithPermissions.filter(col => {
